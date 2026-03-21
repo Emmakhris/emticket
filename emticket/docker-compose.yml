@@ -1,0 +1,76 @@
+services:
+  db:
+    image: postgres:16
+    container_name: emticket_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-emticket}
+      POSTGRES_USER: ${POSTGRES_USER:-emticket}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-emticket}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: emticket_redis
+    ports:
+      - "6379:6379"
+
+  web:
+    build: .
+    container_name: emticket_web
+    command:
+      [
+        "/app/scripts/entrypoint.sh",
+        "gunicorn",
+        "emticket.wsgi:application",
+        "--bind",
+        "0.0.0.0:8000",
+        "--workers",
+        "3",
+        "--timeout",
+        "120"
+      ]
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: .
+    container_name: emticket_worker
+    command: ["celery", "-A", "emticket", "worker", "-l", "INFO", "--concurrency=2"]
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - media_volume:/app/media
+    depends_on:
+      - db
+      - redis
+
+  beat:
+    build: .
+    container_name: emticket_beat
+    command:
+      ["celery", "-A", "emticket", "beat", "-l", "INFO", "--scheduler", "django_celery_beat.schedulers:DatabaseScheduler"]
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}New Ticket · Hospital Desk{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl">
+  <h1 class="text-2xl font-semibold">Create Ticket</h1>
+  <p class="text-sm text-slate-500 mt-1">Log an issue or request in under 30 seconds.</p>
+
+  <form method="post" class="mt-6 bg-white border rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+    {% csrf_token %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="text-sm text-slate-600">Site</label>
+        {{ form.site }}
+      </div>
+      <div>
+        <label class="text-sm text-slate-600">Department</label>
+        {{ form.department }}
+      </div>
+      <div>
+        <label class="text-sm text-slate-600">Team</label>
+        {{ form.team }}
+      </div>
+      <div>
+        <label class="text-sm text-slate-600">Category</label>
+        {{ form.category }}
+      </div>
+      <div>
+        <label class="text-sm text-slate-600">Subcategory</label>
+        {{ form.subcategory }}
+      </div>
+      <div>
+        <label class="text-sm text-slate-600">Related Asset</label>
+        {{ form.related_asset }}
+      </div>
+    </div>
+
+    <div>
+      <label class="text-sm text-slate-600">Title</label>
+      {{ form.title }}
+    </div>
+
+    <div>
+      <label class="text-sm text-slate-600">Description</label>
+      {{ form.description }}
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="text-sm text-slate-600">Impact</label>
+        {{ form.impact }}
+      </div>
+      <div>
+        <label class="text-sm text-slate-600">Urgency</label>
+        {{ form.urgency }}
+      </div>
+      <div>
+        <label class="text-sm text-slate-600">Location</label>
+        {{ form.location_detail }}
+      </div>
+    </div>
+
+    {% if form.errors %}
+      <div class="p-3 rounded-xl bg-red-50 text-red-700 text-sm">
+        Please fix the errors and try again.
+      </div>
+    {% endif %}
+
+    <div class="flex gap-3">
+      <button class="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium">Create Ticket</button>
+      <a href="{% url 'tickets:list' %}" class="px-4 py-2 rounded-xl bg-white border text-sm font-medium">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Make Django default widgets look decent without custom widget attrs
+  document.querySelectorAll("select, input[type=text], textarea").forEach(el => {
+    el.classList.add("w-full", "px-3", "py-2", "rounded-xl", "border", "bg-white", "text-sm");
+  });
+</script>
+{% endblock %}

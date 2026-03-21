@@ -1,0 +1,30 @@
+<div class="flex flex-col gap-4">
+  <div class="p-4 rounded-2xl bg-slate-50 border">
+    <div class="text-xs text-slate-500">Original request</div>
+    <div class="mt-1 text-sm whitespace-pre-wrap">{{ ticket.description }}</div>
+    <div class="mt-2 text-xs text-slate-500">
+      By {{ ticket.requester.email }} · {{ ticket.created_at|date:"Y-m-d H:i" }}
+    </div>
+  </div>
+
+  {% for c in ticket.comments.all %}
+    <div class="p-4 rounded-2xl border {% if c.is_internal %}bg-yellow-50{% else %}bg-white{% endif %}">
+      <div class="flex items-center justify-between">
+        <div class="text-sm font-medium">
+          {{ c.author.email }}
+          {% if c.is_internal %}
+            <span class="ml-2 text-xs px-2 py-1 rounded-lg bg-yellow-100 text-yellow-800">Internal</span>
+          {% endif %}
+        </div>
+        <div class="text-xs text-slate-500">{{ c.created_at|date:"Y-m-d H:i" }}</div>
+      </div>
+      <div class="mt-2 text-sm whitespace-pre-wrap">{{ c.body }}</div>
+    </div>
+  {% empty %}
+    <div class="text-sm text-slate-500">No replies yet.</div>
+  {% endfor %}
+
+  <div class="mt-2">
+    {% include "tickets/partials/attachments.html" %}
+  </div>
+</div>

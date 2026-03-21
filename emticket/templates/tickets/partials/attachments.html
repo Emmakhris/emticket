@@ -1,0 +1,18 @@
+<div class="mt-3">
+  <div class="text-xs text-slate-500 mb-2">Attachments</div>
+  <div class="space-y-2">
+    {% for a in ticket.attachments.all %}
+      <div class="flex items-center justify-between p-3 rounded-xl border bg-white">
+        <div class="text-sm">
+          <div class="font-medium">{{ a.filename|default:"Attachment" }}</div>
+          <div class="text-xs text-slate-500">
+            {{ a.size_bytes }} bytes · {{ a.created_at|date:"Y-m-d H:i" }}
+          </div>
+        </div>
+        <a class="text-sm text-slate-700 hover:underline" href="{{ a.file.url }}" target="_blank">Open</a>
+      </div>
+    {% empty %}
+      <div class="text-sm text-slate-500">No attachments.</div>
+    {% endfor %}
+  </div>
+</div>

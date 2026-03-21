@@ -1,0 +1,12 @@
+Django>=4.2,<6.0
+djangorestframework
+django-environ
+psycopg[binary]
+gunicorn
+whitenoise
+celery
+redis
+django-celery-beat
+django-celery-results
+django-filter
+drf-spectacular

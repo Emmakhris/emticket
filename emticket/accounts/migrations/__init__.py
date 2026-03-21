@@ -1,0 +1,30 @@
+from django.conf import settings
+from django.db import migrations, models
+import django.db.models.deletion
+
+
+class Migration(migrations.Migration):
+    initial = True
+
+    dependencies = [
+        ("organizations", "0001_initial"),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name="UserProfile",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("role", models.CharField(choices=[("requester", "Requester"), ("agent", "Agent"), ("supervisor", "Supervisor"), ("team_lead", "Team Lead"), ("admin", "Admin")], default="requester", max_length=32)),
+                ("is_vip", models.BooleanField(default=False)),
+                ("notification_prefs", models.JSONField(blank=True, default=dict)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("department", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to="organizations.department")),
+                ("organization", models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name="user_profiles", to="organizations.organization")),
+                ("site", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to="organizations.site")),
+                ("team", models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to="organizations.team")),
+                ("user", models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name="profile", to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+    ]

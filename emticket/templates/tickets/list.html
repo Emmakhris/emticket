@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Tickets · Hospital Desk{% endblock %}
+
+{% block content %}
+<div class="flex flex-col gap-4">
+  <div class="flex items-end justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold">Tickets</h1>
+      <p class="text-sm text-slate-500">Search, filter, and manage hospital service requests.</p>
+    </div>
+
+    <form class="flex gap-2"
+          hx-get="{% url 'tickets:list' %}"
+          hx-target="#ticketTable"
+          hx-push-url="true">
+      <input name="q" value="{{ request.GET.q }}" placeholder="Search ticket #, title..."
+             class="w-72 px-3 py-2 rounded-xl border bg-white text-sm"/>
+      <select name="status" class="px-3 py-2 rounded-xl border bg-white text-sm">
+        <option value="">All status</option>
+        {% for key,label in status_choices %}
+          <option value="{{ key }}" {% if request.GET.status == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <label class="flex items-center gap-2 px-3 py-2 rounded-xl border bg-white text-sm">
+        <input type="checkbox" name="my" value="1" {% if request.GET.my == "1" %}checked{% endif %}/>
+        My queue
+      </label>
+      <button class="px-4 py-2 rounded-xl bg-white border text-sm font-medium">Filter</button>
+    </form>
+  </div>
+
+  <div id="ticketTable" class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+    {% include "tickets/partials/table.html" %}
+  </div>
+</div>
+{% endblock %}

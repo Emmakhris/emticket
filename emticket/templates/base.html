@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>{% block title %}Hospital Desk{% endblock %}</title>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <header class="sticky top-0 bg-white/90 backdrop-blur border-b">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a class="flex items-center gap-3" href="{% url 'tickets:list' %}">
+        <div class="h-9 w-9 rounded-xl bg-slate-900"></div>
+        <div>
+          <div class="font-semibold leading-tight">Hospital Desk</div>
+          <div class="text-xs text-slate-500">Ticketing & Service Management</div>
+        </div>
+      </a>
+      <div class="flex items-center gap-3">
+        <a href="{% url 'tickets:create' %}" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium">
+          + New Ticket
+        </a>
+        <div class="text-sm text-slate-600">{{ request.user.email }}</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
