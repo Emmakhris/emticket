@@ -40,3 +40,22 @@
     {% endfor %}
   </tbody>
 </table>
+
+{% if page_obj %}
+<div class="flex items-center justify-between px-3 py-3 text-sm text-slate-600 border-t">
+  <span>
+    Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} tickets
+  </span>
+  <div class="flex gap-2">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}&my={{ request.GET.my }}"
+         class="px-3 py-1 rounded border border-slate-300 hover:bg-slate-100">← Prev</a>
+    {% endif %}
+    <span class="px-3 py-1">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&status={{ request.GET.status }}&my={{ request.GET.my }}"
+         class="px-3 py-1 rounded border border-slate-300 hover:bg-slate-100">Next →</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

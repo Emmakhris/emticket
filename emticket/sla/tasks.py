@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime
 from typing import List
 
 from celery import shared_task
 from django.conf import settings
-from django.db.models import Q
 from django.utils import timezone
 
 from .models import SLAStatus
-from tickets.models import TicketStatus
 from automations.services import run_ticket_automations
+
+logger = logging.getLogger(__name__)
 
 
 def _now() -> datetime:
@@ -26,18 +27,8 @@ def _progress_ratio(start: datetime, due: datetime, now: datetime) -> float:
 @shared_task
 def sla_scan_and_escalate():
     """
-    Runs frequently (e.g., every 60s) to:
-    - mark breach flags
-    
-    - call escalation hooks at thresholds
+    Runs every 60 s via Celery beat to mark SLA breach flags and fire escalation hooks.
     """
-    run_ticket_automations(
-    ticket=ticket,
-    trigger="sla_breached",
-    actor=None,
-    extra={"breach_type": "resolution"}  # or "first_response"
-)
-
     now = _now()
     thresholds: List[float] = getattr(settings, "SLA_ESCALATION_THRESHOLDS", [0.7, 0.9, 1.0])
 
@@ -52,7 +43,6 @@ def sla_scan_and_escalate():
     for sla in qs.iterator(chunk_size=500):
         ticket = sla.ticket
 
-        # Skip paused; breaches shouldn't accrue while paused
         if sla.paused:
             continue
 
@@ -61,45 +51,46 @@ def sla_scan_and_escalate():
             if now > sla.first_response_due_at and not sla.breached_first_response:
                 sla.breached_first_response = True
                 sla.save(update_fields=["breached_first_response", "updated_at"])
-                _notify_escalation(ticket_id=str(ticket.id), kind="first_response_breached", ratio=1.0)
-
+                _notify_escalation(ticket=ticket, kind="first_response_breached", ratio=1.0)
+                run_ticket_automations(
+                    ticket=ticket,
+                    trigger="sla_breached",
+                    actor=None,
+                    extra={"breach_type": "first_response"},
+                )
             else:
                 ratio = _progress_ratio(ticket.created_at.astimezone(timezone.utc), sla.first_response_due_at, now)
-                _threshold_escalate(ticket_id=str(ticket.id), kind="first_response", ratio=ratio, thresholds=thresholds)
+                _threshold_escalate(ticket=ticket, kind="first_response", ratio=ratio, thresholds=thresholds)
 
         # Resolution breach check
         if sla.resolution_due_at and not ticket.resolved_at:
             if now > sla.resolution_due_at and not sla.breached_resolution:
                 sla.breached_resolution = True
                 sla.save(update_fields=["breached_resolution", "updated_at"])
-                _notify_escalation(ticket_id=str(ticket.id), kind="resolution_breached", ratio=1.0)
-
+                _notify_escalation(ticket=ticket, kind="resolution_breached", ratio=1.0)
+                run_ticket_automations(
+                    ticket=ticket,
+                    trigger="sla_breached",
+                    actor=None,
+                    extra={"breach_type": "resolution"},
+                )
             else:
                 ratio = _progress_ratio(ticket.created_at.astimezone(timezone.utc), sla.resolution_due_at, now)
-                _threshold_escalate(ticket_id=str(ticket.id), kind="resolution", ratio=ratio, thresholds=thresholds)
+                _threshold_escalate(ticket=ticket, kind="resolution", ratio=ratio, thresholds=thresholds)
 
 
-def _threshold_escalate(ticket_id: str, kind: str, ratio: float, thresholds: List[float]) -> None:
-    """
-    Hook: at thresholds, emit notifications/actions.
-    To keep this stateless, we do simple notifications; to avoid duplicates,
-    you can record escalation events in AuditEvent / AutomationRun later.
-    """
+def _threshold_escalate(ticket, kind: str, ratio: float, thresholds: List[float]) -> None:
     for t in thresholds:
         if ratio >= t and t < 1.0:
-            _notify_escalation(ticket_id=ticket_id, kind=f"{kind}_at_{int(t*100)}", ratio=ratio)
+            _notify_escalation(ticket=ticket, kind=f"{kind}_at_{int(t * 100)}", ratio=ratio)
 
 
-def _notify_escalation(ticket_id: str, kind: str, ratio: float) -> None:
+def _notify_escalation(ticket, kind: str, ratio: float) -> None:
     """
-    Replace this with:
-    - notifications app (in-app + email)
-    - audit log event
-    - automation triggers (e.g., auto reassign)
+    Logs the SLA event. Phase 3 wires this to Notification + email.
+    Deduplication should be added via AuditEvent lookup or a Redis cache key.
     """
-    # For now we just print; swap to logger / Notification model.
-    # IMPORTANT: do not spam in production; implement dedupe in AuditEvent or a cache key.
-    print(f"[SLA] ticket={ticket_id} event={kind} ratio={ratio:.2f}")
+    logger.warning("[SLA] ticket=%s event=%s ratio=%.2f", ticket.id, kind, ratio)
 
 
 

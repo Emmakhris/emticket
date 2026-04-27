@@ -9,7 +9,7 @@ app = Celery("emticket")
 app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
-CELERY_BEAT_SCHEDULE = {
+app.conf.beat_schedule = {
     "sla-scan-every-minute": {
         "task": "sla.tasks.sla_scan_and_escalate",
         "schedule": 60.0,

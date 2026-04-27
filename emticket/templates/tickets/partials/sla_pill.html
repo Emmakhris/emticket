@@ -1,0 +1,9 @@
+{% if color == "grey" %}
+  <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-500">—</span>
+{% elif color == "red" %}
+  <span class="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-semibold">{{ label }}</span>
+{% elif color == "amber" %}
+  <span class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-700 font-semibold">{{ label }}</span>
+{% else %}
+  <span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">{{ label }}</span>
+{% endif %}

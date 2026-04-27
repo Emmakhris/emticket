@@ -23,6 +23,23 @@ def ticket_pre_save(sender, instance: Ticket, **kwargs):
 def ticket_post_save(sender, instance: Ticket, created: bool, **kwargs):
     if created:
         initialize_or_recompute_sla(instance)
+
+        # Log audit event for programmatic creation (e.g. subtasks from automations).
+        # View-triggered creation is already logged in ticket_create view.
+        if not getattr(instance, "_skip_audit", False):
+            try:
+                from audit.services import log_event
+                if instance.organization_id:
+                    log_event(
+                        organization=instance.organization,
+                        actor=instance.requester,
+                        event_type="ticket.created",
+                        object_type="Ticket",
+                        object_id=instance.id,
+                        after={"ticket_number": instance.ticket_number, "title": instance.title},
+                    )
+            except Exception:
+                pass
         return
 
     old_status = getattr(instance, "_old_status", None)

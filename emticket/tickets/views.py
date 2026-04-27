@@ -1,52 +1,26 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from sla.services import mark_first_response
-from automations.services import run_ticket_automations
 
+from accounts.permissions import can_view_ticket as _user_can_view_ticket  # noqa: F401
+from audit.services import log_event
+from automations.services import run_ticket_automations
+from sla.services import mark_first_response
+from .services import calculate_priority
 
 from .forms import (
-    TicketCreateForm,
-    TicketCommentForm,
-    TicketStatusForm,
     TicketAttachmentForm,
+    TicketCommentForm,
+    TicketCreateForm,
+    TicketStatusForm,
 )
 from .models import Ticket, TicketComment, TicketStatus
-from organizations.models import Team
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
-
-
-def _user_can_view_ticket(user, ticket: Ticket) -> bool:
-    """
-    Minimal access rules (expand later):
-    - requester OR assignee OR watcher
-    - OR user role is admin/team lead/supervisor (not implemented here)
-    - OR user in same team (via profile.team)
-    - confidential tickets: only requester/assignee/same team/admin
-    """
-    if not user.is_authenticated:
-        return False
-
-    if ticket.requester_id == user.id:
-        return True
-    if ticket.assignee_id == user.id:
-        return True
-    if ticket.watchers.filter(id=user.id).exists():
-        return True
-
-    profile = getattr(user, "profile", None)
-    if profile and profile.team_id and ticket.team_id == profile.team_id:
-        return True
-
-    # fallback: allow same department (non-confidential)
-    if profile and profile.department_id and not (ticket.visibility == "confidential"):
-        return ticket.department_id == profile.department_id
-
-    return False
 
 
 @login_required
@@ -75,9 +49,12 @@ def ticket_list(request):
     if status:
         qs = qs.filter(status=status)
 
-    # Render partial table if HTMX
+    paginator = Paginator(qs, 50)
+    page_obj = paginator.get_page(request.GET.get("page", 1))
+
     context = {
-        "tickets": qs[:200],  # keep simple; add pagination later
+        "page_obj": page_obj,
+        "tickets": page_obj.object_list,
         "status_choices": TicketStatus.choices,
     }
 
@@ -101,10 +78,19 @@ def ticket_create(request):
                 return HttpResponseBadRequest("User has no organization profile.")
 
             ticket.requester = request.user
-
-            # minimal auto: if team not set, infer from category.department teams later
+            ticket.priority = calculate_priority(ticket.impact, ticket.urgency)
             ticket.save()
             ticket.watchers.add(request.user)
+
+            log_event(
+                organization=ticket.organization,
+                actor=request.user,
+                event_type="ticket.created",
+                object_type="Ticket",
+                object_id=ticket.id,
+                after={"ticket_number": ticket.ticket_number, "title": ticket.title},
+                request=request,
+            )
 
             return redirect("tickets:detail", ticket_id=ticket.id)
     else:
@@ -168,32 +154,26 @@ def ticket_add_comment(request, ticket_id):
     c.author = request.user
     c.save()
 
+    log_event(
+        organization=ticket.organization,
+        actor=request.user,
+        event_type="ticket.commented",
+        object_type="Ticket",
+        object_id=ticket.id,
+        after={"is_internal": c.is_internal},
+        request=request,
+    )
 
-    # extra info helps rules like: if comment_is_internal == false then notify requester
     run_ticket_automations(
         ticket=ticket,
         trigger="ticket_commented",
         actor=request.user,
-        extra={"comment_is_internal": c.is_internal}
+        extra={"comment_is_internal": c.is_internal},
     )
-    {"all":[{"field":"status","op":"eq","value":"waiting_requester"}]}
 
-
-    
-    # ...
     if not c.is_internal and request.user != ticket.requester and not ticket.first_response_at:
         mark_first_response(ticket)
 
-
-
-
-    # mark first response if agent replied publicly
-    if not c.is_internal and not ticket.first_response_at and request.user != ticket.requester:
-        ticket.first_response_at = timezone.now()
-        ticket.status = TicketStatus.OPEN if ticket.status == TicketStatus.NEW else ticket.status
-        ticket.save(update_fields=["first_response_at", "status", "updated_at"])
-
-    # return updated thread partial
     ticket = Ticket.objects.prefetch_related("comments__author").get(id=ticket_id)
     return render(request, "tickets/partials/thread.html", {"ticket": ticket})
 
@@ -211,6 +191,7 @@ def ticket_set_status(request, ticket_id):
     if not form.is_valid():
         return HttpResponseBadRequest("Invalid status")
 
+    old_status = ticket.status
     new_status = form.cleaned_data["status"]
     ticket.status = new_status
 
@@ -220,6 +201,18 @@ def ticket_set_status(request, ticket_id):
         ticket.closed_at = timezone.now()
 
     ticket.save(update_fields=["status", "resolved_at", "closed_at", "updated_at"])
+
+    log_event(
+        organization=ticket.organization,
+        actor=request.user,
+        event_type="ticket.status_changed",
+        object_type="Ticket",
+        object_id=ticket.id,
+        before={"status": old_status},
+        after={"status": new_status},
+        request=request,
+    )
+
     return render(request, "tickets/partials/sidebar.html", {"ticket": ticket, "status_choices": TicketStatus.choices})
 
 
@@ -246,6 +239,16 @@ def ticket_assign(request, ticket_id):
         ticket.status = TicketStatus.OPEN
     ticket.save(update_fields=["assignee", "status", "updated_at"])
 
+    log_event(
+        organization=ticket.organization,
+        actor=request.user,
+        event_type="ticket.assigned",
+        object_type="Ticket",
+        object_id=ticket.id,
+        after={"assignee": assignee.email},
+        request=request,
+    )
+
     return render(request, "tickets/partials/sidebar.html", {"ticket": ticket, "status_choices": TicketStatus.choices})
 
 
@@ -258,8 +261,21 @@ def ticket_unassign(request, ticket_id):
     if request.method != "POST":
         return HttpResponseBadRequest("POST required")
 
+    old_assignee = ticket.assignee.email if ticket.assignee else None
     ticket.assignee = None
     ticket.save(update_fields=["assignee", "updated_at"])
+
+    log_event(
+        organization=ticket.organization,
+        actor=request.user,
+        event_type="ticket.unassigned",
+        object_type="Ticket",
+        object_id=ticket.id,
+        before={"assignee": old_assignee},
+        after={"assignee": None},
+        request=request,
+    )
+
     return render(request, "tickets/partials/sidebar.html", {"ticket": ticket, "status_choices": TicketStatus.choices})
 
 
@@ -286,6 +302,16 @@ def ticket_add_attachment(request, ticket_id):
     except Exception:
         att.size_bytes = 0
     att.save()
+
+    log_event(
+        organization=ticket.organization,
+        actor=request.user,
+        event_type="ticket.attachment_added",
+        object_type="Ticket",
+        object_id=ticket.id,
+        after={"filename": att.filename, "size_bytes": att.size_bytes},
+        request=request,
+    )
 
     ticket = Ticket.objects.prefetch_related("attachments").get(id=ticket_id)
     return render(request, "tickets/partials/attachments.html", {"ticket": ticket})

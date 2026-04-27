@@ -58,8 +58,7 @@ class AutomationEngine:
                 object_type="Ticket",
                 object_id=str(obj.id),
             ).order_by("-ran_at").exists():
-                # NOTE: if you want "run every time", remove this block.
-                pass
+                continue
 
             matched = False
             actions_executed: List[Dict[str, Any]] = []
