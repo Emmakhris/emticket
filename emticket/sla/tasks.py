@@ -86,11 +86,34 @@ def _threshold_escalate(ticket, kind: str, ratio: float, thresholds: List[float]
 
 
 def _notify_escalation(ticket, kind: str, ratio: float) -> None:
-    """
-    Logs the SLA event. Phase 3 wires this to Notification + email.
-    Deduplication should be added via AuditEvent lookup or a Redis cache key.
-    """
     logger.warning("[SLA] ticket=%s event=%s ratio=%.2f", ticket.id, kind, ratio)
+
+    if ratio < 1.0:
+        return
+
+    from notifications.models import Notification
+    from notifications.tasks import send_notification_email
+
+    event_type = (
+        "sla.first_response_breached" if "first_response" in kind else "sla.resolution_breached"
+    )
+    title = f"SLA breach: {ticket.ticket_number or ticket.id}"
+
+    targets = []
+    if ticket.assignee:
+        targets.append(ticket.assignee)
+    if ticket.requester and ticket.requester != ticket.assignee:
+        targets.append(ticket.requester)
+
+    for user in targets:
+        notif = Notification.objects.create(
+            organization=ticket.organization,
+            user=user,
+            ticket=ticket,
+            title=title[:255],
+            body=f"SLA breach event: {kind}",
+        )
+        send_notification_email.delay(notif.pk, event_type)
 
 
 

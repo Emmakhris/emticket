@@ -1,0 +1,13 @@
+SLA BREACH ALERT
+
+Ticket {{ ticket.ticket_number|default:ticket.id }} has breached its SLA.
+
+Title: {{ ticket.title }}
+Department: {{ ticket.department.name }}
+Priority: {{ ticket.get_priority_display }}
+Assignee: {{ ticket.assignee.email|default:"Unassigned" }}
+
+{{ notification.body }}
+
+---
+Hospital Desk | Do not reply to this email.

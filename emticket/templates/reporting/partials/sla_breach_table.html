@@ -1,0 +1,31 @@
+<div id="sla-breaching" class="bg-white rounded-xl border p-5">
+  <h2 class="font-semibold mb-3 text-sm">Breaching Soon <span class="text-slate-400 font-normal">(next 2 hours)</span></h2>
+  {% if stats.breaching_soon %}
+  <table class="w-full text-xs">
+    <thead class="text-slate-500">
+      <tr>
+        <th class="text-left pb-2">Ticket</th>
+        <th class="text-left pb-2">Title</th>
+        <th class="text-left pb-2">Due</th>
+        <th class="text-left pb-2">Assignee</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in stats.breaching_soon %}
+      <tr class="border-t">
+        <td class="py-2">
+          <a href="{% url 'tickets:detail' t.id %}" class="text-blue-600 hover:underline font-mono">
+            {{ t.ticket_number|default:t.id|truncatechars:10 }}
+          </a>
+        </td>
+        <td class="py-2 max-w-[160px] truncate">{{ t.title }}</td>
+        <td class="py-2 text-amber-600 font-medium">{{ t.sla.resolution_due_at|date:"H:i" }}</td>
+        <td class="py-2 text-slate-500">{{ t.assignee.email|default:"—" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-sm text-slate-400">No tickets breaching in the next 2 hours.</p>
+  {% endif %}
+</div>

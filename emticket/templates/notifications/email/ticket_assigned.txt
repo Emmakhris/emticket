@@ -1,0 +1,10 @@
+Hello {{ user.get_short_name|default:user.email }},
+
+Ticket {{ ticket.ticket_number|default:ticket.id }} has been assigned to you.
+
+Title: {{ ticket.title }}
+Department: {{ ticket.department.name }}
+Priority: {{ ticket.get_priority_display }}
+
+---
+Hospital Desk | Do not reply to this email.

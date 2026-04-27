@@ -6,13 +6,21 @@
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      document.body.addEventListener("htmx:configRequest", function (e) {
+        e.detail.headers["X-CSRFToken"] = document.querySelector("meta[name=csrf-token]").content;
+      });
+    });
+  </script>
   <title>{% block title %}Hospital Desk{% endblock %}</title>
 </head>
 <body class="bg-slate-50 text-slate-900">
   <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b">
     <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
       <!-- Logo -->
-      <a class="flex items-center gap-2.5 shrink-0" href="{% url 'tickets:list' %}">
+      <a class="flex items-center gap-2.5 shrink-0" href="{% url 'reporting:dashboard' %}">
         <div class="h-8 w-8 rounded-lg bg-slate-900 flex items-center justify-center text-white text-xs font-bold">HD</div>
         <span class="font-semibold text-sm hidden sm:block">Hospital Desk</span>
       </a>
@@ -21,6 +29,10 @@
       {% if request.user.is_authenticated %}
       {% with role=request.user.profile.role %}
       <nav class="flex items-center gap-1 text-sm overflow-x-auto">
+        <a href="{% url 'reporting:dashboard' %}"
+           class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 whitespace-nowrap">
+          Dashboard
+        </a>
         <a href="{% url 'tickets:list' %}"
            class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 whitespace-nowrap">
           Tickets
@@ -62,6 +74,27 @@
            class="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-sm font-medium whitespace-nowrap">
           + New Ticket
         </a>
+
+        <!-- Notification bell -->
+        <div x-data="{ open: false }" class="relative">
+          <button @click="open = !open" @click.outside="open = false"
+                  class="relative p-1.5 rounded-lg hover:bg-slate-100 text-slate-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span id="bell-badge"
+                  hx-get="{% url 'notifications:count' %}"
+                  hx-trigger="load, every 30s"
+                  hx-swap="innerHTML"></span>
+          </button>
+          <div x-show="open" x-transition class="absolute right-0 top-full mt-1 z-50"
+               hx-get="{% url 'notifications:list' %}"
+               hx-trigger="intersect once"
+               hx-swap="innerHTML">
+          </div>
+        </div>
+
         <div x-data="{ open: false }" class="relative">
           <button @click="open = !open"
                   class="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 px-2 py-1.5 rounded-lg hover:bg-slate-100">

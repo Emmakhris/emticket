@@ -9,12 +9,14 @@ urlpatterns = [
 
     path("accounts/", include("django.contrib.auth.urls")),
 
-    path("", include("tickets.urls")),
+    path("", include("reporting.urls")),        # dashboard at /
+    path("tickets/", include("tickets.urls")),
     path("users/", include("accounts.urls")),
     path("organizations/", include("organizations.urls")),
     path("assets/", include("assets.urls")),
     path("automations/", include("automations.urls")),
     path("sla/", include("sla.urls")),
+    path("notifications/", include("notifications.urls")),
 
     path("healthz/", lambda request: JsonResponse({"status": "ok"})),
     path("readyz/", lambda request: JsonResponse({"ready": True})),

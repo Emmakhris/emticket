@@ -1,0 +1,15 @@
+Hello {{ user.get_short_name|default:user.email }},
+
+A new support ticket has been created.
+
+Ticket: {{ ticket.ticket_number|default:ticket.id }}
+Title: {{ ticket.title }}
+Department: {{ ticket.department.name }}
+Priority: {{ ticket.get_priority_display }}
+Status: {{ ticket.get_status_display }}
+
+Description:
+{{ ticket.description }}
+
+---
+Hospital Desk | Do not reply to this email.

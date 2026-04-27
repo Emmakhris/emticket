@@ -1,0 +1,13 @@
+<!doctype html>
+<html><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;padding:24px">
+<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin-bottom:16px">
+  <span style="color:#dc2626;font-weight:600;font-size:14px">⚠ SLA Breach</span>
+</div>
+<h2 style="font-size:18px;margin-bottom:4px">{{ ticket.ticket_number|default:ticket.id }}: {{ ticket.title }}</h2>
+<table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:16px">
+  <tr><td style="padding:6px 0;color:#64748b">Department</td><td style="padding:6px 0">{{ ticket.department.name }}</td></tr>
+  <tr><td style="padding:6px 0;color:#64748b">Priority</td><td style="padding:6px 0">{{ ticket.get_priority_display }}</td></tr>
+  <tr><td style="padding:6px 0;color:#64748b">Assignee</td><td style="padding:6px 0">{{ ticket.assignee.email|default:"Unassigned" }}</td></tr>
+</table>
+<p style="margin-top:24px;font-size:12px;color:#94a3b8">Hospital Desk — Do not reply to this email.</p>
+</body></html>

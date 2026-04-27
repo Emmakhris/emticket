@@ -9,6 +9,7 @@ from django.utils import timezone
 from accounts.permissions import can_view_ticket as _user_can_view_ticket  # noqa: F401
 from audit.services import log_event
 from automations.services import run_ticket_automations
+from notifications.models import Notification
 from sla.services import mark_first_response
 from .services import calculate_priority
 
@@ -30,7 +31,7 @@ def ticket_list(request):
     my = (request.GET.get("my") or "").strip()
 
     qs = Ticket.objects.select_related(
-        "department", "team", "category", "site", "assignee", "requester"
+        "department", "team", "category", "site", "assignee", "requester", "sla"
     ).order_by("-updated_at")
 
     # Basic scoping: show "my" tickets by default if requester role, otherwise show broader.
@@ -91,6 +92,16 @@ def ticket_create(request):
                 after={"ticket_number": ticket.ticket_number, "title": ticket.title},
                 request=request,
             )
+
+            from notifications.tasks import send_notification_email
+            notif = Notification.objects.create(
+                organization=ticket.organization,
+                user=ticket.requester,
+                ticket=ticket,
+                title=f"Ticket {ticket.ticket_number or ticket.id} opened",
+                body=ticket.title,
+            )
+            send_notification_email.delay(notif.pk, "ticket.created")
 
             return redirect("tickets:detail", ticket_id=ticket.id)
     else:
@@ -174,6 +185,19 @@ def ticket_add_comment(request, ticket_id):
     if not c.is_internal and request.user != ticket.requester and not ticket.first_response_at:
         mark_first_response(ticket)
 
+    if not c.is_internal:
+        from notifications.tasks import send_notification_email
+        notify_user = ticket.requester if request.user != ticket.requester else ticket.assignee
+        if notify_user:
+            notif = Notification.objects.create(
+                organization=ticket.organization,
+                user=notify_user,
+                ticket=ticket,
+                title=f"New comment on {ticket.ticket_number or ticket.id}",
+                body=c.body[:500],
+            )
+            send_notification_email.delay(notif.pk, "ticket.commented")
+
     ticket = Ticket.objects.prefetch_related("comments__author").get(id=ticket_id)
     return render(request, "tickets/partials/thread.html", {"ticket": ticket})
 
@@ -248,6 +272,16 @@ def ticket_assign(request, ticket_id):
         after={"assignee": assignee.email},
         request=request,
     )
+
+    from notifications.tasks import send_notification_email
+    notif = Notification.objects.create(
+        organization=ticket.organization,
+        user=assignee,
+        ticket=ticket,
+        title=f"Ticket assigned to you: {ticket.ticket_number or ticket.id}",
+        body=ticket.title,
+    )
+    send_notification_email.delay(notif.pk, "ticket.assigned")
 
     return render(request, "tickets/partials/sidebar.html", {"ticket": ticket, "status_choices": TicketStatus.choices})
 

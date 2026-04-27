@@ -1,0 +1,13 @@
+<!doctype html>
+<html><body style="font-family:sans-serif;color:#1e293b;max-width:600px;margin:0 auto;padding:24px">
+<h2 style="font-size:18px;margin-bottom:4px">New Ticket Opened</h2>
+<p style="color:#64748b;font-size:14px">{{ ticket.ticket_number|default:ticket.id }}</p>
+<table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:16px">
+  <tr><td style="padding:6px 0;color:#64748b">Title</td><td style="padding:6px 0;font-weight:600">{{ ticket.title }}</td></tr>
+  <tr><td style="padding:6px 0;color:#64748b">Department</td><td style="padding:6px 0">{{ ticket.department.name }}</td></tr>
+  <tr><td style="padding:6px 0;color:#64748b">Priority</td><td style="padding:6px 0">{{ ticket.get_priority_display }}</td></tr>
+  <tr><td style="padding:6px 0;color:#64748b">Status</td><td style="padding:6px 0">{{ ticket.get_status_display }}</td></tr>
+</table>
+<div style="margin-top:16px;padding:12px;background:#f8fafc;border-radius:8px;font-size:14px">{{ ticket.description|linebreaksbr }}</div>
+<p style="margin-top:24px;font-size:12px;color:#94a3b8">Hospital Desk — Do not reply to this email.</p>
+</body></html>

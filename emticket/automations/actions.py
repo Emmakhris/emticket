@@ -180,13 +180,15 @@ def action_notify(ticket: Ticket, payload: Dict[str, Any]) -> ActionResult:
     if not user:
         return ActionResult(False, "notify: no target user resolved")
 
-    Notification.objects.create(
+    notification = Notification.objects.create(
         organization=ticket.organization,
         user=user,
         ticket=ticket,
         title=str(title)[:255],
         body=str(body),
     )
+    from notifications.tasks import send_notification_email
+    send_notification_email.delay(notification.pk, "")
     return ActionResult(True, f"Notified user {user.id}.", changed=True)
 
 

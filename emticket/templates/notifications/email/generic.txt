@@ -1,0 +1,8 @@
+Hello {{ user.get_short_name|default:user.email }},
+
+{{ notification.title }}
+
+{{ notification.body }}
+
+---
+Hospital Desk | Do not reply to this email.

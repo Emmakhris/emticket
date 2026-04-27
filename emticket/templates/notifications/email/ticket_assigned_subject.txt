@@ -1,0 +1,1 @@
+[{{ ticket.ticket_number|default:ticket.id }}] Assigned to you: {{ ticket.title }}

@@ -1,0 +1,1 @@
+[SLA BREACH] {{ ticket.ticket_number|default:ticket.id }}: {{ ticket.title }}

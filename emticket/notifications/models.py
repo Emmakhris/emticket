@@ -17,4 +17,5 @@ class Notification(models.Model):
     body = models.TextField(blank=True)
 
     is_read = models.BooleanField(default=False)
+    emailed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

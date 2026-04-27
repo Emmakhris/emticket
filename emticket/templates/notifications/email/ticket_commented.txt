@@ -1,0 +1,11 @@
+Hello {{ user.get_short_name|default:user.email }},
+
+A new comment has been added to ticket {{ ticket.ticket_number|default:ticket.id }}.
+
+Title: {{ ticket.title }}
+Status: {{ ticket.get_status_display }}
+
+{{ notification.body }}
+
+---
+Hospital Desk | Do not reply to this email.

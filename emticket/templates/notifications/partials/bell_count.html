@@ -1,0 +1,6 @@
+{% if count %}
+<span id="bell-count"
+      class="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center leading-none font-bold">
+  {{ count|default:"" }}
+</span>
+{% endif %}

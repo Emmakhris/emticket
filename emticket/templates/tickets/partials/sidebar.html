@@ -67,6 +67,35 @@
     </div>
   </div>
 
+  {% if ticket.sla %}
+  <div class="border-t pt-4">
+    <div class="text-xs text-slate-500 mb-2">SLA</div>
+    <div class="text-sm space-y-1">
+      {% if ticket.sla.paused %}
+        <span class="inline-block px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-500">Paused: {{ ticket.sla.paused_reason|default:"—" }}</span>
+      {% endif %}
+      <div>
+        <span class="text-slate-500">First response:</span>
+        {% if ticket.sla.first_response_due_at %}
+          <span class="{% if ticket.sla.breached_first_response %}text-red-600{% else %}text-slate-800{% endif %}">
+            {{ ticket.sla.first_response_due_at|date:"Y-m-d H:i" }}
+            {% if ticket.sla.breached_first_response %}<span class="text-xs text-red-600 ml-1">Breached</span>{% endif %}
+          </span>
+        {% else %}—{% endif %}
+      </div>
+      <div>
+        <span class="text-slate-500">Resolution:</span>
+        {% if ticket.sla.resolution_due_at %}
+          <span class="{% if ticket.sla.breached_resolution %}text-red-600{% else %}text-slate-800{% endif %}">
+            {{ ticket.sla.resolution_due_at|date:"Y-m-d H:i" }}
+            {% if ticket.sla.breached_resolution %}<span class="text-xs text-red-600 ml-1">Breached</span>{% endif %}
+          </span>
+        {% else %}—{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="border-t pt-4">
     <div class="text-xs text-slate-500">Attachments</div>
     <form method="post" enctype="multipart/form-data"

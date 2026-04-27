@@ -1,0 +1,22 @@
+<div id="stats-cards" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+  <div class="bg-white rounded-xl border p-4">
+    <div class="text-xs text-slate-500 mb-1">Open Tickets</div>
+    <div class="text-3xl font-bold text-slate-900">{{ stats.open_count }}</div>
+  </div>
+  <div class="bg-white rounded-xl border p-4">
+    <div class="text-xs text-slate-500 mb-1">SLA Breached</div>
+    <div class="text-3xl font-bold {% if stats.sla_breached_count %}text-red-600{% else %}text-slate-900{% endif %}">
+      {{ stats.sla_breached_count }}
+    </div>
+  </div>
+  <div class="bg-white rounded-xl border p-4">
+    <div class="text-xs text-slate-500 mb-1">Unassigned</div>
+    <div class="text-3xl font-bold {% if stats.unassigned_count %}text-amber-600{% else %}text-slate-900{% endif %}">
+      {{ stats.unassigned_count }}
+    </div>
+  </div>
+  <div class="bg-white rounded-xl border p-4">
+    <div class="text-xs text-slate-500 mb-1">Resolved Today</div>
+    <div class="text-3xl font-bold text-green-600">{{ stats.resolved_today_count }}</div>
+  </div>
+</div>

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Hospital Desk{% endblock %}
+{% block content %}
+
+<div class="mb-6">
+  <h1 class="text-xl font-semibold">Dashboard</h1>
+  <p class="text-sm text-slate-500 mt-0.5">Live service desk overview</p>
+</div>
+
+<!-- Stats cards (auto-refresh every 60s) -->
+<div id="stats-cards"
+     hx-get="{% url 'reporting:dashboard' %}?section=stats"
+     hx-trigger="every 60s"
+     hx-swap="outerHTML">
+  {% include "reporting/partials/stats_cards.html" %}
+</div>
+
+<!-- Lower section: my queue + breaching soon -->
+<div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div id="my-queue"
+       hx-get="{% url 'reporting:dashboard' %}?section=my_queue"
+       hx-trigger="every 60s"
+       hx-swap="outerHTML">
+    {% include "reporting/partials/my_queue_widget.html" %}
+  </div>
+
+  <div id="sla-breaching"
+       hx-get="{% url 'reporting:dashboard' %}?section=breaching"
+       hx-trigger="every 60s"
+       hx-swap="outerHTML">
+    {% include "reporting/partials/sla_breach_table.html" %}
+  </div>
+</div>
+{% endblock %}
