@@ -1,0 +1,56 @@
+<table class="w-full text-sm">
+  <thead class="bg-slate-50 text-slate-600">
+    <tr>
+      <th class="text-left p-3">Asset ID</th>
+      <th class="text-left p-3">Type</th>
+      <th class="text-left p-3">Vendor / Model</th>
+      <th class="text-left p-3">Site</th>
+      <th class="text-left p-3">Location</th>
+      <th class="text-left p-3">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for asset in assets %}
+    <tr class="border-t hover:bg-slate-50">
+      <td class="p-3">
+        <a href="{% url 'assets:asset_detail' asset.pk %}" class="font-mono font-medium text-slate-900 hover:underline">
+          {{ asset.asset_id }}
+        </a>
+      </td>
+      <td class="p-3 text-slate-600">{{ asset.asset_type.name }}</td>
+      <td class="p-3">
+        <div>{{ asset.vendor|default:"—" }}</div>
+        <div class="text-xs text-slate-500">{{ asset.model|default:"" }}</div>
+      </td>
+      <td class="p-3 text-slate-600">{{ asset.site.code|default:"—" }}</td>
+      <td class="p-3 text-slate-600">{{ asset.location.name|default:asset.location_text|default:"—" }}</td>
+      <td class="p-3">
+        {% if asset.in_service %}
+          <span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">In Service</span>
+        {% else %}
+          <span class="px-2 py-0.5 rounded text-xs bg-red-100 text-red-600">Out of Service</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="p-8 text-center text-slate-400">No assets found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if page_obj %}
+<div class="flex items-center justify-between px-3 py-3 text-sm text-slate-600 border-t">
+  <span>{{ page_obj.paginator.count }} asset{{ page_obj.paginator.count|pluralize }}</span>
+  <div class="flex gap-2">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&asset_type={{ request.GET.asset_type }}"
+         class="px-3 py-1 rounded border border-slate-300 hover:bg-slate-100">← Prev</a>
+    {% endif %}
+    <span class="px-3 py-1">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&asset_type={{ request.GET.asset_type }}"
+         class="px-3 py-1 rounded border border-slate-300 hover:bg-slate-100">Next →</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

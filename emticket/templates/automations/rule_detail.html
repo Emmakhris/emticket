@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ rule.name }} — Hospital Desk{% endblock %}
+{% block content %}
+<div class="mb-4"><a href="{% url 'automations:rule_list' %}" class="text-sm text-slate-500 hover:underline">← Automation Rules</a></div>
+
+<div class="grid grid-cols-3 gap-6">
+  <!-- Rule info -->
+  <div class="col-span-1 bg-white rounded-xl border p-5 space-y-3">
+    <div class="flex items-center justify-between">
+      <h1 class="font-semibold text-base">{{ rule.name }}</h1>
+      {% if rule.enabled %}
+        <span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">Enabled</span>
+      {% else %}
+        <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-500">Disabled</span>
+      {% endif %}
+    </div>
+    <div class="text-sm space-y-1.5 border-t pt-3">
+      <div><span class="text-slate-500">Trigger:</span> {{ rule.get_trigger_display }}</div>
+      <div><span class="text-slate-500">Priority:</span> {{ rule.priority }}</div>
+      <div><span class="text-slate-500">Run once:</span> {% if rule.run_once %}Yes{% else %}No (repeating){% endif %}</div>
+      <div><span class="text-slate-500">Updated:</span> {{ rule.updated_at|date:"Y-m-d H:i" }}</div>
+    </div>
+    <div class="flex gap-2 pt-2">
+      <a href="{% url 'automations:rule_edit' rule.pk %}" class="px-3 py-1.5 border rounded text-sm hover:bg-slate-50">Edit</a>
+      <button hx-post="{% url 'automations:rule_toggle' rule.pk %}"
+              hx-target="body" hx-push-url="false"
+              class="px-3 py-1.5 border rounded text-sm hover:bg-slate-50">
+        {% if rule.enabled %}Disable{% else %}Enable{% endif %}
+      </button>
+    </div>
+
+    <!-- Test Rule -->
+    <div class="border-t pt-3" x-data="{ticketId:'', result:null, loading:false}">
+      <p class="text-sm font-medium mb-2">Test Rule (dry run)</p>
+      <input x-model="ticketId" type="text" placeholder="Ticket UUID"
+             class="w-full border rounded px-2 py-1 text-xs font-mono mb-2">
+      <button @click="loading=true;
+                fetch('{% url 'automations:rule_test' rule.pk %}', {
+                  method:'POST',
+                  headers:{'X-CSRFToken':'{{ csrf_token }}','Content-Type':'application/x-www-form-urlencoded'},
+                  body:'ticket_id='+encodeURIComponent(ticketId)
+                }).then(r=>r.json()).then(d=>{result=d;loading=false})"
+              class="px-3 py-1.5 bg-slate-800 text-white text-xs rounded w-full">
+        <span x-show="!loading">Run Test</span><span x-show="loading">Running…</span>
+      </button>
+      <pre x-show="result" x-text="JSON.stringify(result,null,2)"
+           class="mt-2 text-xs bg-slate-50 rounded p-2 overflow-auto max-h-48"></pre>
+    </div>
+  </div>
+
+  <!-- Recent runs -->
+  <div class="col-span-2 bg-white rounded-xl border p-5">
+    <h2 class="font-semibold mb-4">Recent Runs <span class="text-slate-400 font-normal text-sm">(last 20)</span></h2>
+    {% if recent_runs %}
+    <table class="w-full text-xs">
+      <thead class="bg-slate-50 text-slate-600">
+        <tr>
+          <th class="text-left p-2">Ticket</th>
+          <th class="text-left p-2">Ran At</th>
+          <th class="text-left p-2">Matched</th>
+          <th class="text-left p-2">Error</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in recent_runs %}
+        <tr class="border-t">
+          <td class="p-2 font-mono">
+            {% if run.object_type == "Ticket" %}
+              <a href="/{{ run.object_id }}/" class="text-blue-600 hover:underline">{{ run.object_id|truncatechars:12 }}</a>
+            {% else %}{{ run.object_id }}{% endif %}
+          </td>
+          <td class="p-2 text-slate-500">{{ run.ran_at|date:"Y-m-d H:i:s" }}</td>
+          <td class="p-2">
+            {% if run.matched %}<span class="text-green-600">Yes</span>{% else %}<span class="text-slate-400">No</span>{% endif %}
+          </td>
+          <td class="p-2 text-red-600">{{ run.error|truncatechars:60|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="text-slate-400 text-sm">No runs yet.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

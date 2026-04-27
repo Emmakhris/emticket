@@ -1,0 +1,24 @@
+<tr class="border-t hover:bg-slate-50" id="rule-row-{{ rule.pk }}">
+  <td class="p-3">
+    <a href="{% url 'automations:rule_detail' rule.pk %}" class="font-medium text-slate-900 hover:underline">{{ rule.name }}</a>
+  </td>
+  <td class="p-3 text-slate-600">{{ rule.get_trigger_display }}</td>
+  <td class="p-3 text-slate-600">{{ rule.priority }}</td>
+  <td class="p-3">{% if rule.run_once %}<span class="text-xs text-slate-500">Once</span>{% else %}<span class="text-xs text-blue-600">Repeating</span>{% endif %}</td>
+  <td class="p-3">
+    {% if rule.enabled %}
+      <span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">Enabled</span>
+    {% else %}
+      <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-500">Disabled</span>
+    {% endif %}
+  </td>
+  <td class="p-3 flex gap-2">
+    <button hx-post="{% url 'automations:rule_toggle' rule.pk %}"
+            hx-target="#rule-row-{{ rule.pk }}"
+            hx-swap="outerHTML"
+            class="text-xs border rounded px-2 py-1 hover:bg-slate-50">
+      {% if rule.enabled %}Disable{% else %}Enable{% endif %}
+    </button>
+    <a href="{% url 'automations:rule_edit' rule.pk %}" class="text-xs border rounded px-2 py-1 hover:bg-slate-50">Edit</a>
+  </td>
+</tr>

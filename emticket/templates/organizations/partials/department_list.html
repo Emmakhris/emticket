@@ -1,0 +1,43 @@
+<div class="flex items-center justify-between mb-2">
+  <span class="text-sm font-medium text-slate-700">Departments</span>
+  <a href="{% url 'organizations:department_create' org.pk %}" class="text-xs text-blue-600 hover:underline">+ Add department</a>
+</div>
+<table class="w-full text-sm">
+  <thead class="text-slate-500 text-xs">
+    <tr>
+      <th class="text-left py-1">Name</th>
+      <th class="text-left py-1">Code</th>
+      <th class="text-left py-1">Confidential</th>
+      <th class="text-left py-1">Teams</th>
+      <th class="py-1"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for dept in departments %}
+    <tr class="border-t" x-data="{openTeams:false}">
+      <td class="py-1 font-medium">{{ dept.name }}</td>
+      <td class="py-1 font-mono text-xs">{{ dept.code }}</td>
+      <td class="py-1">{% if dept.is_confidential %}<span class="text-xs text-red-600">Yes</span>{% else %}—{% endif %}</td>
+      <td class="py-1">
+        <button @click="openTeams=!openTeams"
+                hx-get="{% url 'organizations:team_list' org.pk dept.pk %}"
+                hx-target="#teams-{{ dept.pk }}"
+                hx-trigger="click once"
+                class="text-xs text-blue-600 hover:underline">
+          {{ dept.teams.count }} team{{ dept.teams.count|pluralize }}
+        </button>
+      </td>
+      <td class="py-1">
+        <a href="{% url 'organizations:department_edit' org.pk dept.pk %}" class="text-xs text-blue-600 hover:underline">Edit</a>
+      </td>
+    </tr>
+    <tr x-show="openTeams">
+      <td colspan="5" class="pl-4 pb-2">
+        <div id="teams-{{ dept.pk }}"></div>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5" class="py-3 text-slate-400 text-xs">No departments yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

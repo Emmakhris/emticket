@@ -9,10 +9,13 @@ urlpatterns = [
 
     path("accounts/", include("django.contrib.auth.urls")),
 
-    # Keep only the app URLs that actually exist
     path("", include("tickets.urls")),
+    path("users/", include("accounts.urls")),
+    path("organizations/", include("organizations.urls")),
+    path("assets/", include("assets.urls")),
+    path("automations/", include("automations.urls")),
+    path("sla/", include("sla.urls")),
 
-    # Health checks
     path("healthz/", lambda request: JsonResponse({"status": "ok"})),
     path("readyz/", lambda request: JsonResponse({"ready": True})),
 ]

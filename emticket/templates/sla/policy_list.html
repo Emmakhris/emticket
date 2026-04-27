@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}SLA Policies — Hospital Desk{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-semibold">SLA Policies</h1>
+    <p class="text-sm text-slate-500 mt-0.5">Default policies (no site / category filter). Click a cell to set or edit.</p>
+  </div>
+</div>
+
+{% if not matrix %}
+<div class="bg-white rounded-xl border p-8 text-center text-slate-400">
+  No departments found. Create departments first in <a href="{% url 'organizations:org_list' %}" class="text-blue-600 hover:underline">Organizations</a>.
+</div>
+{% else %}
+<div class="bg-white rounded-xl border overflow-auto">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 border-b">
+      <tr>
+        <th class="text-left p-3 font-medium">Department</th>
+        {% for pval, plabel in priority_choices %}
+        <th class="text-left p-3 font-medium">{{ plabel }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in matrix %}
+      <tr class="border-t">
+        <td class="p-3 font-medium text-slate-700">{{ row.dept.name }}</td>
+        {% for cell in row.cells %}
+        <td class="p-3 align-top">
+          <div id="cell-{{ row.dept.pk }}-{{ cell.priority }}">
+            {% include "sla/partials/policy_cell.html" with dept=row.dept cell=cell %}
+          </div>
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

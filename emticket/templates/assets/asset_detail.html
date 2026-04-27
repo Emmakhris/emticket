@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ asset.asset_id }} — Hospital Desk{% endblock %}
+{% block content %}
+<div class="mb-4"><a href="{% url 'assets:asset_list' %}" class="text-sm text-slate-500 hover:underline">← Assets</a></div>
+
+<div class="grid grid-cols-3 gap-6">
+  <div class="col-span-1 space-y-4">
+    <div class="bg-white rounded-xl border p-5 space-y-3">
+      <div class="flex items-center justify-between">
+        <h1 class="font-mono font-semibold text-lg">{{ asset.asset_id }}</h1>
+        {% if asset.in_service %}
+          <span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">In Service</span>
+        {% else %}
+          <span class="px-2 py-0.5 rounded text-xs bg-red-100 text-red-600">Out of Service</span>
+        {% endif %}
+      </div>
+      <div class="text-sm space-y-1.5 pt-2 border-t">
+        <div><span class="text-slate-500">Type:</span> {{ asset.asset_type.name }}</div>
+        <div><span class="text-slate-500">Vendor:</span> {{ asset.vendor|default:"—" }}</div>
+        <div><span class="text-slate-500">Model:</span> {{ asset.model|default:"—" }}</div>
+        <div><span class="text-slate-500">Serial:</span> <span class="font-mono text-xs">{{ asset.serial_number|default:"—" }}</span></div>
+        <div><span class="text-slate-500">Site:</span> {{ asset.site|default:"—" }}</div>
+        <div><span class="text-slate-500">Location:</span> {{ asset.location.name|default:asset.location_text|default:"—" }}</div>
+        {% if asset.notes %}<div class="pt-2 text-slate-600 italic text-xs">{{ asset.notes }}</div>{% endif %}
+      </div>
+      <a href="{% url 'assets:asset_edit' asset.pk %}" class="inline-block mt-2 px-3 py-1.5 border rounded text-sm hover:bg-slate-50">Edit Asset</a>
+    </div>
+  </div>
+
+  <div class="col-span-2 bg-white rounded-xl border p-5">
+    <h2 class="font-semibold mb-4">Linked Tickets <span class="text-slate-400 font-normal text-sm">({{ linked_tickets|length }})</span></h2>
+    {% if linked_tickets %}
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-slate-600 text-xs">
+        <tr>
+          <th class="text-left p-2">Ticket</th>
+          <th class="text-left p-2">Title</th>
+          <th class="text-left p-2">Status</th>
+          <th class="text-left p-2">Assignee</th>
+          <th class="text-left p-2">Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in linked_tickets %}
+        <tr class="border-t hover:bg-slate-50">
+          <td class="p-2"><a href="{% url 'tickets:detail' t.id %}" class="font-mono text-blue-600 hover:underline">{{ t.ticket_number }}</a></td>
+          <td class="p-2">{{ t.title|truncatechars:50 }}</td>
+          <td class="p-2"><span class="px-2 py-0.5 rounded text-xs bg-slate-100">{{ t.get_status_display }}</span></td>
+          <td class="p-2 text-slate-500">{{ t.assignee.email|default:"—" }}</td>
+          <td class="p-2 text-slate-500">{{ t.created_at|date:"Y-m-d" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="text-slate-400 text-sm">No tickets linked to this asset.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Assets — Hospital Desk{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-xl font-semibold">Assets</h1>
+  <a href="{% url 'assets:asset_create' %}" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium">+ New Asset</a>
+</div>
+
+<form class="flex flex-wrap gap-3 mb-4"
+      hx-get="{% url 'assets:asset_list' %}"
+      hx-target="#asset-table"
+      hx-trigger="input delay:300ms, change"
+      hx-push-url="false">
+  <input type="text" name="q" value="{{ request.GET.q }}"
+         placeholder="Search ID, vendor, model…"
+         class="border rounded px-3 py-1.5 text-sm flex-1 min-w-[200px]">
+  <select name="asset_type" class="border rounded px-3 py-1.5 text-sm">
+    <option value="">All types</option>
+    {% for at in asset_types %}
+      <option value="{{ at.pk }}" {% if request.GET.asset_type == at.pk|stringformat:"s" %}selected{% endif %}>{{ at.name }}</option>
+    {% endfor %}
+  </select>
+  <select name="in_service" class="border rounded px-3 py-1.5 text-sm">
+    <option value="">All</option>
+    <option value="1" {% if request.GET.in_service == "1" %}selected{% endif %}>In service</option>
+    <option value="0" {% if request.GET.in_service == "0" %}selected{% endif %}>Out of service</option>
+  </select>
+</form>
+
+<div id="asset-table" class="bg-white rounded-xl border">
+  {% include "assets/partials/asset_table.html" %}
+</div>
+{% endblock %}

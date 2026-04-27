@@ -9,20 +9,81 @@
   <title>{% block title %}Hospital Desk{% endblock %}</title>
 </head>
 <body class="bg-slate-50 text-slate-900">
-  <header class="sticky top-0 bg-white/90 backdrop-blur border-b">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a class="flex items-center gap-3" href="{% url 'tickets:list' %}">
-        <div class="h-9 w-9 rounded-xl bg-slate-900"></div>
-        <div>
-          <div class="font-semibold leading-tight">Hospital Desk</div>
-          <div class="text-xs text-slate-500">Ticketing & Service Management</div>
-        </div>
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
+      <!-- Logo -->
+      <a class="flex items-center gap-2.5 shrink-0" href="{% url 'tickets:list' %}">
+        <div class="h-8 w-8 rounded-lg bg-slate-900 flex items-center justify-center text-white text-xs font-bold">HD</div>
+        <span class="font-semibold text-sm hidden sm:block">Hospital Desk</span>
       </a>
-      <div class="flex items-center gap-3">
-        <a href="{% url 'tickets:create' %}" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium">
+
+      <!-- Primary nav -->
+      {% if request.user.is_authenticated %}
+      {% with role=request.user.profile.role %}
+      <nav class="flex items-center gap-1 text-sm overflow-x-auto">
+        <a href="{% url 'tickets:list' %}"
+           class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 whitespace-nowrap">
+          Tickets
+        </a>
+
+        {% if role == "admin" or role == "supervisor" or role == "team_lead" or role == "agent" %}
+        <a href="{% url 'assets:asset_list' %}"
+           class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 whitespace-nowrap">
+          Assets
+        </a>
+        {% endif %}
+
+        {% if role == "admin" or role == "supervisor" %}
+        <a href="{% url 'automations:rule_list' %}"
+           class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 whitespace-nowrap">
+          Automations
+        </a>
+        <a href="{% url 'sla:policy_list' %}"
+           class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 whitespace-nowrap">
+          SLA
+        </a>
+        <a href="{% url 'organizations:org_list' %}"
+           class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 whitespace-nowrap">
+          Orgs
+        </a>
+        <a href="{% url 'accounts:user_list' %}"
+           class="px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-600 hover:text-slate-900 whitespace-nowrap">
+          Users
+        </a>
+        {% endif %}
+      </nav>
+      {% endwith %}
+      {% endif %}
+
+      <!-- Right side -->
+      <div class="flex items-center gap-2 shrink-0">
+        {% if request.user.is_authenticated %}
+        <a href="{% url 'tickets:create' %}"
+           class="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-sm font-medium whitespace-nowrap">
           + New Ticket
         </a>
-        <div class="text-sm text-slate-600">{{ request.user.email }}</div>
+        <div x-data="{ open: false }" class="relative">
+          <button @click="open = !open"
+                  class="flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 px-2 py-1.5 rounded-lg hover:bg-slate-100">
+            <span class="hidden sm:block">{{ request.user.get_short_name|default:request.user.email }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+          <div x-show="open" @click.outside="open = false"
+               x-transition
+               class="absolute right-0 mt-1 w-44 bg-white rounded-xl border shadow-lg py-1 z-50">
+            <div class="px-3 py-1.5 text-xs text-slate-400 border-b truncate">{{ request.user.email }}</div>
+            {% if request.user.profile.role %}
+            <div class="px-3 py-1.5 text-xs text-slate-500 capitalize">{{ request.user.profile.role }}</div>
+            {% endif %}
+            <a href="{% url 'logout' %}"
+               class="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50">Sign out</a>
+          </div>
+        </div>
+        {% else %}
+        <a href="{% url 'login' %}" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white text-sm">Sign in</a>
+        {% endif %}
       </div>
     </div>
   </header>

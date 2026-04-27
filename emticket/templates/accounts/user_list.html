@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Users — Hospital Desk{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-xl font-semibold">Users</h1>
+  <a href="{% url 'accounts:user_create' %}" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium">+ New User</a>
+</div>
+
+<form class="flex gap-3 mb-4"
+      hx-get="{% url 'accounts:user_list' %}"
+      hx-target="#user-table"
+      hx-trigger="input delay:300ms, change"
+      hx-push-url="false">
+  {{ search_form.q }}
+  {{ search_form.role }}
+  <button type="submit" class="px-3 py-1.5 rounded border text-sm">Search</button>
+</form>
+
+<div id="user-table">
+  {% include "accounts/partials/user_table.html" %}
+</div>
+{% endblock %}

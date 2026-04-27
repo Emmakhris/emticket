@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Automation Rules — Hospital Desk{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-xl font-semibold">Automation Rules</h1>
+  <a href="{% url 'automations:rule_create' %}" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium">+ New Rule</a>
+</div>
+
+<div class="bg-white rounded-xl border" id="rule-list">
+  {% include "automations/partials/rule_table.html" %}
+</div>
+{% endblock %}

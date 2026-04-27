@@ -1,0 +1,58 @@
+<table class="w-full text-sm">
+  <thead class="bg-slate-50 text-slate-600">
+    <tr>
+      <th class="text-left p-3">Name</th>
+      <th class="text-left p-3">Email</th>
+      <th class="text-left p-3">Role</th>
+      <th class="text-left p-3">Department</th>
+      <th class="text-left p-3">Team</th>
+      <th class="text-left p-3">VIP</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in users %}
+    <tr class="border-t hover:bg-slate-50">
+      <td class="p-3">
+        <a href="{% url 'accounts:user_detail' u.pk %}" class="font-medium text-slate-900 hover:underline">
+          {{ u.get_full_name|default:u.username }}
+        </a>
+      </td>
+      <td class="p-3 text-slate-600">{{ u.email }}</td>
+      <td class="p-3">
+        {% if u.profile %}
+          <span class="px-2 py-0.5 rounded text-xs
+            {% if u.profile.role == 'admin' %}bg-red-100 text-red-700
+            {% elif u.profile.role == 'supervisor' %}bg-purple-100 text-purple-700
+            {% elif u.profile.role == 'team_lead' %}bg-blue-100 text-blue-700
+            {% elif u.profile.role == 'agent' %}bg-green-100 text-green-700
+            {% else %}bg-slate-100 text-slate-600{% endif %}">
+            {{ u.profile.get_role_display }}
+          </span>
+        {% else %}—{% endif %}
+      </td>
+      <td class="p-3 text-slate-600">{{ u.profile.department.code|default:"—" }}</td>
+      <td class="p-3 text-slate-600">{{ u.profile.team.name|default:"—" }}</td>
+      <td class="p-3">{% if u.profile.is_vip %}<span class="text-amber-500">★</span>{% else %}—{% endif %}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="p-8 text-center text-slate-400">No users found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if page_obj %}
+<div class="flex items-center justify-between px-3 py-3 text-sm text-slate-600 border-t">
+  <span>{{ page_obj.paginator.count }} user{{ page_obj.paginator.count|pluralize }}</span>
+  <div class="flex gap-2">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}&role={{ request.GET.role }}"
+         class="px-3 py-1 rounded border border-slate-300 hover:bg-slate-100">← Prev</a>
+    {% endif %}
+    <span class="px-3 py-1">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}&role={{ request.GET.role }}"
+         class="px-3 py-1 rounded border border-slate-300 hover:bg-slate-100">Next →</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

@@ -1,0 +1,19 @@
+{% if cell.policy %}
+<div class="space-y-0.5">
+  <div class="text-xs text-slate-500">FR: <span class="font-medium text-slate-800">{{ cell.policy.first_response_minutes }}m</span></div>
+  <div class="text-xs text-slate-500">Res: <span class="font-medium text-slate-800">{{ cell.policy.resolution_minutes }}m</span></div>
+  {% if not cell.policy.is_active %}
+  <span class="text-xs text-slate-400 italic">Inactive</span>
+  {% endif %}
+</div>
+<button hx-get="{% url 'sla:policy_edit' cell.policy.pk %}"
+        hx-target="#cell-{{ dept.pk }}-{{ cell.priority }}"
+        hx-swap="innerHTML"
+        class="mt-1.5 text-xs text-blue-600 hover:underline">Edit</button>
+{% else %}
+<span class="text-xs text-slate-400">—</span>
+<button hx-get="{% url 'sla:policy_create' %}?department={{ dept.pk }}&priority={{ cell.priority }}"
+        hx-target="#cell-{{ dept.pk }}-{{ cell.priority }}"
+        hx-swap="innerHTML"
+        class="block mt-1 text-xs text-slate-500 hover:text-blue-600 hover:underline">Set</button>
+{% endif %}

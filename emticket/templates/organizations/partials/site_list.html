@@ -1,0 +1,29 @@
+<div class="flex items-center justify-between mb-2">
+  <span class="text-sm font-medium text-slate-700">Sites</span>
+  <a href="{% url 'organizations:site_create' org.pk %}" class="text-xs text-blue-600 hover:underline">+ Add site</a>
+</div>
+<table class="w-full text-sm">
+  <thead class="text-slate-500 text-xs">
+    <tr>
+      <th class="text-left py-1">Name</th>
+      <th class="text-left py-1">Code</th>
+      <th class="text-left py-1">Address</th>
+      <th class="py-1"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for site in sites %}
+    <tr class="border-t">
+      <td class="py-1 font-medium">{{ site.name }}</td>
+      <td class="py-1 font-mono text-xs">{{ site.code }}</td>
+      <td class="py-1 text-slate-500">{{ site.address|truncatechars:40|default:"—" }}</td>
+      <td class="py-1 flex gap-2">
+        <a href="{% url 'organizations:site_edit' org.pk site.pk %}" class="text-xs text-blue-600 hover:underline">Edit</a>
+        <a href="{% url 'organizations:calendar_edit' org.pk site.pk %}" class="text-xs text-slate-500 hover:underline">Calendar</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="4" class="py-3 text-slate-400 text-xs">No sites yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

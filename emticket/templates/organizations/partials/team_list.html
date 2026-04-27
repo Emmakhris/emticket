@@ -1,0 +1,17 @@
+<div class="flex items-center justify-between mb-1">
+  <span class="text-xs font-medium text-slate-600">Teams in {{ dept.name }}</span>
+  <a href="{% url 'organizations:team_create' org.pk dept.pk %}" class="text-xs text-blue-600 hover:underline">+ Add team</a>
+</div>
+<table class="w-full text-xs">
+  <tbody>
+    {% for team in teams %}
+    <tr class="border-t">
+      <td class="py-1 font-medium">{{ team.name }}</td>
+      <td class="py-1 text-slate-500">{{ team.email_alias|default:"—" }}</td>
+      <td class="py-1">{% if not team.is_active %}<span class="text-red-500">Inactive</span>{% endif %}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="3" class="py-2 text-slate-400">No teams yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

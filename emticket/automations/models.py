@@ -28,8 +28,15 @@ class AutomationRule(models.Model):
     conditions = models.JSONField(default=dict, blank=True)
     actions = models.JSONField(default=list, blank=True)
 
+    # If False, the rule may fire more than once for the same ticket (e.g. sla_breached on each scan).
+    # If True (default), the engine skips rules that already have an AutomationRun record for this ticket.
+    run_once = models.BooleanField(default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
 
 
 class AutomationRun(models.Model):

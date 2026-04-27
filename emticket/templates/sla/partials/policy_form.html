@@ -1,0 +1,28 @@
+<form hx-post="{{ action_url }}"
+      hx-target="#{{ cell_id }}"
+      hx-swap="innerHTML"
+      class="space-y-2 text-xs">
+  {% csrf_token %}
+  {% for field in form %}
+    {% if field.is_hidden %}
+      {{ field }}
+    {% elif field.name == "department" or field.name == "priority" %}
+      {{ field.as_hidden }}
+    {% else %}
+      <div>
+        <label class="block text-slate-600 mb-0.5">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<p class="text-red-500">{{ field.errors.0 }}</p>{% endif %}
+      </div>
+    {% endif %}
+  {% endfor %}
+  <div class="flex gap-2 pt-1">
+    <button type="submit"
+            class="px-2 py-1 bg-slate-900 text-white rounded text-xs">Save</button>
+    <button type="button"
+            hx-get="{{ cancel_url }}"
+            hx-target="#{{ cell_id }}"
+            hx-swap="innerHTML"
+            class="px-2 py-1 border rounded text-xs text-slate-600 hover:bg-slate-50">Cancel</button>
+  </div>
+</form>

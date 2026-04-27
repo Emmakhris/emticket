@@ -23,9 +23,10 @@ class AutomationEngine:
     Runs rules for a given organization + trigger on an object.
     """
 
-    def __init__(self, *, organization_id: int, trigger: str):
+    def __init__(self, *, organization_id: int, trigger: str, dry_run: bool = False):
         self.organization_id = organization_id
         self.trigger = trigger
+        self.dry_run = dry_run
 
     def _load_rules(self) -> List[AutomationRule]:
         return list(
@@ -49,15 +50,15 @@ class AutomationEngine:
             if rule.id in executed:
                 continue
 
-            # DB-level dedupe: avoid rerunning same rule repeatedly
-            # We keep it simple: if a run exists in last few seconds, skip.
-            # Replace with AuditEvent or Redis key if you want stronger dedupe.
-            if AutomationRun.objects.filter(
+            # DB-level dedupe: skip if the rule has already run for this ticket
+            # and run_once=True (the default). Set run_once=False on rules that
+            # should fire on every matching event (e.g. repeated sla_breached).
+            if rule.run_once and AutomationRun.objects.filter(
                 organization_id=self.organization_id,
                 rule_id=rule.id,
                 object_type="Ticket",
                 object_id=str(obj.id),
-            ).order_by("-ran_at").exists():
+            ).exists():
                 continue
 
             matched = False
@@ -67,21 +68,22 @@ class AutomationEngine:
             try:
                 matched = eval_group(rule.conditions or {}, ctx)
 
-                if matched:
+                if matched and not self.dry_run:
                     actions_executed = self._execute_actions(obj, rule.actions or [])
             except Exception as e:
                 error = str(e)
 
-            # Write run record
-            AutomationRun.objects.create(
-                organization_id=self.organization_id,
-                rule_id=rule.id,
-                object_type="Ticket",
-                object_id=str(obj.id),
-                matched=matched,
-                actions_executed=actions_executed,
-                error=error,
-            )
+            # Write run record (skipped in dry_run mode)
+            if not self.dry_run:
+                AutomationRun.objects.create(
+                    organization_id=self.organization_id,
+                    rule_id=rule.id,
+                    object_type="Ticket",
+                    object_id=str(obj.id),
+                    matched=matched,
+                    actions_executed=actions_executed,
+                    error=error,
+                )
 
             executed.add(rule.id)
             setattr(obj, executed_key, executed)

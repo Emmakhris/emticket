@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Organizations — Hospital Desk{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-xl font-semibold">Organizations</h1>
+  <a href="{% url 'organizations:org_create' %}" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium">+ New Org</a>
+</div>
+
+<div class="space-y-4">
+  {% for org in orgs %}
+  <div class="bg-white rounded-xl border" x-data="{openSites:false, openDepts:false}">
+    <div class="flex items-center justify-between p-4">
+      <div>
+        <span class="font-semibold">{{ org.name }}</span>
+        <span class="ml-2 text-xs text-slate-500 font-mono">{{ org.code }}</span>
+        {% if not org.is_active %}<span class="ml-2 px-2 py-0.5 rounded text-xs bg-red-100 text-red-600">Inactive</span>{% endif %}
+      </div>
+      <div class="flex gap-2 text-sm">
+        <button @click="openSites=!openSites"
+                hx-get="{% url 'organizations:site_list' org.pk %}"
+                hx-target="#sites-{{ org.pk }}"
+                hx-trigger="click once"
+                class="px-3 py-1 rounded border hover:bg-slate-50">Sites</button>
+        <button @click="openDepts=!openDepts"
+                hx-get="{% url 'organizations:department_list' org.pk %}"
+                hx-target="#depts-{{ org.pk }}"
+                hx-trigger="click once"
+                class="px-3 py-1 rounded border hover:bg-slate-50">Departments</button>
+        <a href="{% url 'organizations:org_edit' org.pk %}" class="px-3 py-1 rounded border hover:bg-slate-50">Edit</a>
+      </div>
+    </div>
+    <div id="sites-{{ org.pk }}" x-show="openSites" class="border-t px-4 py-3 bg-slate-50"></div>
+    <div id="depts-{{ org.pk }}" x-show="openDepts" class="border-t px-4 py-3 bg-slate-50"></div>
+  </div>
+  {% empty %}
+  <div class="text-center py-12 text-slate-400">No organizations yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}
