@@ -1,0 +1,62 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}{{ ticket.ticket_number|default:ticket.id }} — My Requests{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <a href="{% url 'portal:my_tickets' %}" class="text-sm text-slate-500 hover:underline">← My Requests</a>
+</div>
+
+<div class="bg-white rounded-xl border p-5 mb-4">
+  <div class="flex items-start justify-between">
+    <div>
+      <h1 class="text-lg font-semibold">{{ ticket.title }}</h1>
+      <div class="text-xs text-slate-500 mt-1">{{ ticket.ticket_number|default:ticket.id }} · {{ ticket.department.name }}</div>
+    </div>
+    <span class="px-2 py-1 rounded text-xs bg-slate-100 text-slate-700">{{ ticket.get_status_display }}</span>
+  </div>
+  <p class="mt-4 text-sm text-slate-700 whitespace-pre-wrap">{{ ticket.description }}</p>
+</div>
+
+<div class="bg-white rounded-xl border divide-y">
+  {% for c in comments %}
+  {% if not c.is_internal %}
+  <div class="p-4">
+    <div class="flex items-center gap-2 mb-1">
+      <span class="text-xs font-medium">{{ c.author.get_short_name|default:c.author.email }}</span>
+      <span class="text-xs text-slate-400">{{ c.created_at|date:"Y-m-d H:i" }}</span>
+    </div>
+    <p class="text-sm text-slate-700 whitespace-pre-wrap">{{ c.body }}</p>
+  </div>
+  {% endif %}
+  {% empty %}
+  <div class="p-4 text-sm text-slate-400">No replies yet.</div>
+  {% endfor %}
+</div>
+
+{% if ticket.status not in "resolved,closed" %}
+<form hx-post="{% url 'tickets:add_comment' ticket.id %}"
+      hx-target="body"
+      class="mt-4 bg-white rounded-xl border p-4 space-y-3">
+  {% csrf_token %}
+  <label class="text-sm font-medium">Reply</label>
+  <textarea name="body" rows="3" placeholder="Write a reply…"
+            class="w-full border rounded-lg px-3 py-2 text-sm resize-none"></textarea>
+  <input type="hidden" name="is_internal" value="false">
+  <button class="px-4 py-2 bg-slate-900 text-white text-sm rounded-lg">Send</button>
+</form>
+{% endif %}
+
+{% if ticket.status == "resolved" and not ticket.csat %}
+<div class="mt-4 bg-white rounded-xl border p-4">
+  <p class="text-sm font-medium mb-2">How was your experience?</p>
+  <form method="post" action="{% url 'portal:csat' ticket.id %}">
+    {% csrf_token %}
+    <div class="flex gap-2">
+      {% for i in "12345" %}
+      <button type="submit" name="rating" value="{{ i }}"
+              class="px-3 py-1.5 border rounded text-sm hover:bg-slate-50">{{ i }} ★</button>
+      {% endfor %}
+    </div>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

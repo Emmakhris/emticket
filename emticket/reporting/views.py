@@ -1,7 +1,8 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from .services import get_dashboard_stats
+from accounts.permissions import require_role
+from .services import get_dashboard_stats, get_volume_by_day, get_sla_compliance, get_agent_workload, get_category_breakdown
 
 
 def _get_org(request):
@@ -24,3 +25,40 @@ def dashboard(request):
         return render(request, "reporting/partials/stats_cards.html", ctx)
 
     return render(request, "reporting/dashboard.html", ctx)
+
+
+@login_required
+@require_role("admin", "supervisor")
+def analytics(request):
+    import json
+    from django.core.serializers.json import DjangoJSONEncoder
+
+    org = _get_org(request)
+    days = int(request.GET.get("days", 30))
+
+    volume_raw = get_volume_by_day(org, days)
+    workload_raw = get_agent_workload(org)
+    categories_raw = get_category_breakdown(org, days)
+    sla = get_sla_compliance(org, days)
+
+    volume_json = json.dumps(
+        [{"day": str(r["day"])[:10], "count": r["count"]} for r in volume_raw],
+        cls=DjangoJSONEncoder,
+    )
+    workload_json = json.dumps(
+        [{"email": r["assignee__email"] or "Unassigned", "count": r["count"]} for r in workload_raw],
+        cls=DjangoJSONEncoder,
+    )
+    categories_json = json.dumps(
+        [{"name": r["category__name"] or "—", "count": r["count"]} for r in categories_raw],
+        cls=DjangoJSONEncoder,
+    )
+
+    ctx = {
+        "days": days,
+        "volume_json": volume_json,
+        "workload_json": workload_json,
+        "categories_json": categories_json,
+        "sla": sla,
+    }
+    return render(request, "reporting/analytics.html", ctx)

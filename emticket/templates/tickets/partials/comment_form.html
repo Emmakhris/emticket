@@ -1,31 +1,44 @@
-<form method="post"
-      hx-post="{% url 'tickets:add_comment' ticket.id %}"
-      hx-target="#thread"
-      hx-swap="innerHTML"
-      class="flex flex-col gap-3">
-  {% csrf_token %}
-  <div class="grid grid-cols-1 gap-2">
-    <label class="text-sm text-slate-600">Reply</label>
-    {{ comment_form.body }}
-  </div>
+<div x-data="{ showCanned: false }"
+     @insert-canned.window="$refs.body.value += $event.detail.body; showCanned = false">
+  <form method="post"
+        hx-post="{% url 'tickets:add_comment' ticket.id %}"
+        hx-target="#thread"
+        hx-swap="innerHTML"
+        class="flex flex-col gap-3">
+    {% csrf_token %}
+    <div class="grid grid-cols-1 gap-2">
+      <div class="flex items-center justify-between">
+        <label class="text-sm text-slate-600">Reply</label>
+        <button type="button"
+                hx-get="{% url 'tickets:canned_picker' ticket.id %}"
+                hx-target="#canned-picker"
+                hx-swap="innerHTML"
+                @click="showCanned = !showCanned"
+                class="text-xs text-slate-500 hover:text-slate-800 border px-2 py-0.5 rounded">
+          Use template
+        </button>
+      </div>
+      <textarea x-ref="body" name="body" rows="4"
+                class="w-full px-3 py-2 border rounded-lg text-sm resize-none"
+                placeholder="Write your reply…"></textarea>
+    </div>
 
-  <label class="flex items-center gap-2 text-sm text-slate-700">
-    {{ comment_form.is_internal }}
-    Internal note (agents only)
-  </label>
+    <div id="canned-picker" x-show="showCanned"></div>
 
-  {% if comment_form.errors %}
+    <label class="flex items-center gap-2 text-sm text-slate-700">
+      {{ comment_form.is_internal }}
+      Internal note (agents only)
+    </label>
+
+    {% if comment_form.errors %}
     <div class="text-sm text-red-700 bg-red-50 border p-3 rounded-xl">
       {{ comment_form.errors }}
     </div>
-  {% endif %}
+    {% endif %}
 
-  <div class="flex gap-3">
-    <button class="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium">
-      Send
-    </button>
-    <button type="reset" class="px-4 py-2 rounded-xl bg-white border text-sm font-medium">
-      Clear
-    </button>
-  </div>
-</form>
+    <div class="flex gap-3">
+      <button class="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium">Send</button>
+      <button type="reset" class="px-4 py-2 rounded-xl bg-white border text-sm font-medium">Clear</button>
+    </div>
+  </form>
+</div>

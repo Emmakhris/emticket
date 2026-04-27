@@ -1,0 +1,15 @@
+<div class="border rounded-lg bg-white shadow-sm mt-2 max-h-48 overflow-y-auto text-sm">
+  {% if responses %}
+  {% for r in responses %}
+  <button type="button"
+          data-body="{{ r.body|escapejs }}"
+          @click="$dispatch('insert-canned', { body: $event.target.closest('[data-body]').getAttribute('data-body') })"
+          class="block w-full text-left px-3 py-2 hover:bg-slate-50 border-b last:border-0">
+    <span class="font-medium">{{ r.name }}</span>
+    <p class="text-xs text-slate-500 truncate">{{ r.body|truncatechars:60 }}</p>
+  </button>
+  {% endfor %}
+  {% else %}
+  <p class="px-3 py-2 text-slate-400">No canned responses available.</p>
+  {% endif %}
+</div>

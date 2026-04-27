@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Knowledge Base — Hospital Desk{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-5">
+  <div>
+    <h1 class="text-xl font-semibold">Knowledge Base</h1>
+    <p class="text-sm text-slate-500 mt-0.5">Search articles and guides.</p>
+  </div>
+  {% if is_agent %}
+  <a href="{% url 'knowledgebase:article_new' %}" class="px-4 py-2 bg-slate-900 text-white text-sm rounded-lg">
+    + New Article
+  </a>
+  {% endif %}
+</div>
+
+<form class="mb-4 flex gap-2"
+      hx-get="{% url 'knowledgebase:article_list' %}"
+      hx-target="#kb-table"
+      hx-push-url="true"
+      hx-trigger="input delay:300ms, submit">
+  <input name="q" value="{{ q }}" placeholder="Search articles…"
+         class="w-full max-w-md px-3 py-2 border rounded-lg text-sm bg-white"/>
+  <button class="px-4 py-2 border rounded-lg text-sm">Search</button>
+</form>
+
+<div id="kb-table" class="bg-white rounded-xl border overflow-auto">
+  {% include "knowledgebase/partials/article_table.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      document.body.addEventListener("htmx:configRequest", function (e) {
+        e.detail.headers["X-CSRFToken"] = document.querySelector("meta[name=csrf-token]").content;
+      });
+    });
+  </script>
+  <title>{% block title %}My Requests — Hospital Desk{% endblock %}</title>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <header class="sticky top-0 bg-white border-b z-20">
+    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="font-semibold">Hospital Desk — My Requests</div>
+      <div class="flex items-center gap-3 text-sm">
+        <span class="text-slate-500">{{ request.user.get_short_name|default:request.user.email }}</span>
+        <a href="{% url 'logout' %}" class="text-slate-500 hover:text-slate-800">Sign out</a>
+      </div>
+    </div>
+  </header>
+  <main class="max-w-3xl mx-auto px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,52 @@
+{% extends "portal/base_portal.html" %}
+{% block title %}My Requests — Hospital Desk{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-5">
+  <h1 class="text-xl font-semibold">My Requests</h1>
+  <a href="{% url 'tickets:create' %}"
+     class="px-4 py-2 bg-slate-900 text-white text-sm rounded-lg">+ New Request</a>
+</div>
+
+<div class="bg-white rounded-xl border overflow-auto">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 border-b">
+      <tr>
+        <th class="text-left p-3">Ticket</th>
+        <th class="text-left p-3">Title</th>
+        <th class="text-left p-3">Status</th>
+        <th class="text-left p-3">Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in tickets %}
+      <tr class="border-t hover:bg-slate-50">
+        <td class="p-3 font-mono text-sm">
+          <a href="{% url 'portal:ticket_detail' t.id %}" class="text-blue-600 hover:underline">
+            {{ t.ticket_number|default:t.id|truncatechars:12 }}
+          </a>
+        </td>
+        <td class="p-3">{{ t.title }}</td>
+        <td class="p-3">
+          <span class="px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-700">{{ t.get_status_display }}</span>
+        </td>
+        <td class="p-3 text-slate-500 text-xs">{{ t.updated_at|date:"Y-m-d H:i" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="p-8 text-center text-slate-400">No requests yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<div class="flex justify-between items-center mt-4 text-sm text-slate-600">
+  {% if page_obj.has_previous %}
+  <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border rounded hover:bg-slate-50">← Prev</a>
+  {% endif %}
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+  <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border rounded hover:bg-slate-50">Next →</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

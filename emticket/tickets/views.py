@@ -349,3 +349,123 @@ def ticket_add_attachment(request, ticket_id):
 
     ticket = Ticket.objects.prefetch_related("attachments").get(id=ticket_id)
     return render(request, "tickets/partials/attachments.html", {"ticket": ticket})
+
+
+@login_required
+def canned_response_picker(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    from .models import CannedResponse
+    profile = getattr(request.user, "profile", None)
+    org = profile.organization if profile else None
+    responses = CannedResponse.objects.filter(organization=org, is_active=True).order_by("name")
+    return render(request, "tickets/partials/canned_response_picker.html", {
+        "responses": responses, "ticket": ticket,
+    })
+
+
+@login_required
+def ticket_bulk_action(request):
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required")
+
+    from accounts.permissions import require_role as _require_role
+    role = getattr(getattr(request.user, "profile", None), "role", "")
+    if role not in ("admin", "supervisor", "team_lead", "agent"):
+        return HttpResponseForbidden("Not allowed")
+
+    ids_raw = request.POST.get("ids", "")
+    action = request.POST.get("action", "")
+    value = request.POST.get("value", "")
+
+    ticket_ids = [i.strip() for i in ids_raw.split(",") if i.strip()]
+    if not ticket_ids or not action:
+        return HttpResponseBadRequest("ids and action required")
+
+    profile = getattr(request.user, "profile", None)
+    org = profile.organization if profile else None
+    tickets_qs = Ticket.objects.filter(id__in=ticket_ids, organization=org)
+
+    from automations.actions import action_set_status, action_set_priority
+    from audit.services import log_event as _log
+
+    changed = 0
+    for ticket in tickets_qs:
+        if action == "set_status":
+            result = action_set_status(ticket, value)
+        elif action == "set_priority":
+            result = action_set_priority(ticket, int(value))
+        else:
+            continue
+        if result.changed:
+            changed += 1
+            _log(
+                organization=ticket.organization,
+                actor=request.user,
+                event_type=f"ticket.bulk_{action}",
+                object_type="Ticket",
+                object_id=ticket.id,
+                after={"action": action, "value": value},
+                request=request,
+            )
+
+    from django.contrib import messages
+    messages.success(request, f"Updated {changed} ticket(s).")
+    return redirect(request.META.get("HTTP_REFERER", "tickets:list"))
+
+
+@login_required
+def ticket_export_csv(request):
+    import csv
+    from django.http import StreamingHttpResponse
+
+    role = getattr(getattr(request.user, "profile", None), "role", "")
+    if role not in ("admin", "supervisor", "team_lead", "agent"):
+        return HttpResponseForbidden("Not allowed")
+
+    profile = getattr(request.user, "profile", None)
+    org = profile.organization if profile else None
+
+    qs = Ticket.objects.select_related(
+        "department", "category", "assignee", "requester", "sla"
+    ).filter(organization=org).order_by("-created_at")[:5000]
+
+    q = (request.GET.get("q") or "").strip()
+    status = (request.GET.get("status") or "").strip()
+    if q:
+        qs = qs.filter(Q(ticket_number__icontains=q) | Q(title__icontains=q))
+    if status:
+        qs = qs.filter(status=status)
+
+    def rows():
+        yield ["ticket_number", "title", "status", "priority", "department",
+               "category", "assignee", "requester", "created_at", "resolved_at",
+               "sla_due", "sla_breached"]
+        for t in qs:
+            sla = getattr(t, "sla", None)
+            yield [
+                t.ticket_number or str(t.id),
+                t.title,
+                t.status,
+                t.get_priority_display(),
+                t.department.name,
+                t.category.name if t.category else "",
+                t.assignee.email if t.assignee else "",
+                t.requester.email if t.requester else "",
+                t.created_at.isoformat() if t.created_at else "",
+                t.resolved_at.isoformat() if t.resolved_at else "",
+                (sla.resolution_due_at.isoformat() if sla and sla.resolution_due_at else ""),
+                (str(sla.breached_resolution) if sla else ""),
+            ]
+
+    class EchoWriter:
+        def write(self, value):
+            return value
+
+    pseudo_buffer = EchoWriter()
+    writer = csv.writer(pseudo_buffer)
+    response = StreamingHttpResponse(
+        (writer.writerow(row) for row in rows()),
+        content_type="text/csv",
+    )
+    response["Content-Disposition"] = 'attachment; filename="tickets.csv"'
+    return response

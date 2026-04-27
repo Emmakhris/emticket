@@ -185,3 +185,19 @@ class CSAT(models.Model):
     rating = models.PositiveSmallIntegerField()  # 1..5
     comment = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class CannedResponse(models.Model):
+    organization = models.ForeignKey("organizations.Organization", on_delete=models.CASCADE, related_name="canned_responses")
+    department = models.ForeignKey("organizations.Department", on_delete=models.PROTECT, null=True, blank=True, related_name="canned_responses")
+    name = models.CharField(max_length=120)
+    body = models.TextField()
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name

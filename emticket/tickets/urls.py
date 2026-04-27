@@ -13,4 +13,7 @@ urlpatterns = [
     path("<uuid:ticket_id>/assign/", views.ticket_assign, name="assign"),
     path("<uuid:ticket_id>/unassign/", views.ticket_unassign, name="unassign"),
     path("<uuid:ticket_id>/attachments/", views.ticket_add_attachment, name="add_attachment"),
+    path("<uuid:ticket_id>/canned/", views.canned_response_picker, name="canned_picker"),
+    path("bulk/", views.ticket_bulk_action, name="bulk_action"),
+    path("export/", views.ticket_export_csv, name="export_csv"),
 ]

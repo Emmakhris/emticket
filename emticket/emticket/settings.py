@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "notifications",
     "audit",
     "reporting",
+    "portal",
 ]
 
 MIDDLEWARE = [

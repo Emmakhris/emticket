@@ -2,31 +2,65 @@
 {% block title %}Tickets · Hospital Desk{% endblock %}
 
 {% block content %}
-<div class="flex flex-col gap-4">
+<div x-data="{ selected: [] }" class="flex flex-col gap-4">
   <div class="flex items-end justify-between gap-4">
     <div>
       <h1 class="text-2xl font-semibold">Tickets</h1>
       <p class="text-sm text-slate-500">Search, filter, and manage hospital service requests.</p>
     </div>
 
-    <form class="flex gap-2"
-          hx-get="{% url 'tickets:list' %}"
-          hx-target="#ticketTable"
-          hx-push-url="true">
-      <input name="q" value="{{ request.GET.q }}" placeholder="Search ticket #, title..."
-             class="w-72 px-3 py-2 rounded-xl border bg-white text-sm"/>
-      <select name="status" class="px-3 py-2 rounded-xl border bg-white text-sm">
-        <option value="">All status</option>
-        {% for key,label in status_choices %}
-          <option value="{{ key }}" {% if request.GET.status == key %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
+    <div class="flex gap-2 items-center">
+      <a href="{% url 'tickets:export_csv' %}?{{ request.GET.urlencode }}"
+         class="px-3 py-2 border rounded-lg text-sm hover:bg-slate-50">Export CSV</a>
+
+      <form class="flex gap-2"
+            hx-get="{% url 'tickets:list' %}"
+            hx-target="#ticketTable"
+            hx-push-url="true">
+        <input name="q" value="{{ request.GET.q }}" placeholder="Search ticket #, title…"
+               class="w-64 px-3 py-2 rounded-xl border bg-white text-sm"/>
+        <select name="status" class="px-3 py-2 rounded-xl border bg-white text-sm">
+          <option value="">All status</option>
+          {% for key,label in status_choices %}
+            <option value="{{ key }}" {% if request.GET.status == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <label class="flex items-center gap-2 px-3 py-2 rounded-xl border bg-white text-sm">
+          <input type="checkbox" name="my" value="1" {% if request.GET.my == "1" %}checked{% endif %}/>
+          My queue
+        </label>
+        <button class="px-4 py-2 rounded-xl bg-white border text-sm font-medium">Filter</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bulk action bar (shown when tickets are selected) -->
+  <div x-show="selected.length > 0"
+       x-cloak
+       class="flex items-center gap-3 bg-slate-900 text-white px-4 py-2.5 rounded-xl text-sm">
+    <span x-text="selected.length + ' selected'"></span>
+    <form hx-post="{% url 'tickets:bulk_action' %}"
+          hx-target="body"
+          class="flex items-center gap-2">
+      {% csrf_token %}
+      <input type="hidden" name="ids" :value="selected.join(',')">
+      <select name="action" class="px-2 py-1 rounded bg-slate-700 border border-slate-600 text-sm">
+        <option value="">Action…</option>
+        <option value="set_status">Set status</option>
+        <option value="set_priority">Set priority</option>
       </select>
-      <label class="flex items-center gap-2 px-3 py-2 rounded-xl border bg-white text-sm">
-        <input type="checkbox" name="my" value="1" {% if request.GET.my == "1" %}checked{% endif %}/>
-        My queue
-      </label>
-      <button class="px-4 py-2 rounded-xl bg-white border text-sm font-medium">Filter</button>
+      <select name="value" class="px-2 py-1 rounded bg-slate-700 border border-slate-600 text-sm">
+        {% for key,label in status_choices %}
+        <option value="{{ key }}">{{ label }}</option>
+        {% endfor %}
+        <option value="1">P1 - Critical</option>
+        <option value="2">P2 - High</option>
+        <option value="3">P3 - Medium</option>
+        <option value="4">P4 - Low</option>
+      </select>
+      <button class="px-3 py-1 bg-white text-slate-900 rounded font-medium">Apply</button>
     </form>
+    <button @click="selected = []" class="ml-auto text-slate-400 hover:text-white text-xs">Clear</button>
   </div>
 
   <div id="ticketTable" class="bg-white rounded-2xl border shadow-sm overflow-hidden">

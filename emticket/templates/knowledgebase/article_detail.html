@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ article.title }} — KB{% endblock %}
+{% block content %}
+<div class="mb-4 flex items-center justify-between">
+  <a href="{% url 'knowledgebase:article_list' %}" class="text-sm text-slate-500 hover:underline">← Knowledge Base</a>
+  {% if is_agent %}
+  <a href="{% url 'knowledgebase:article_edit' article.pk %}" class="text-sm text-slate-600 border px-3 py-1 rounded-lg hover:bg-slate-50">Edit</a>
+  {% endif %}
+</div>
+
+<div class="max-w-3xl bg-white rounded-xl border p-6">
+  <div class="flex items-center gap-2 mb-1">
+    {% if article.visibility == "internal" %}
+    <span class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-700">Internal</span>
+    {% else %}
+    <span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">Public</span>
+    {% endif %}
+    <span class="text-xs text-slate-400">{{ article.department.name }}</span>
+  </div>
+  <h1 class="text-xl font-semibold mb-4">{{ article.title }}</h1>
+
+  <div class="prose prose-slate max-w-none text-sm leading-relaxed">
+    {{ rendered_body|safe }}
+  </div>
+
+  <div class="border-t mt-6 pt-4">
+    <p class="text-xs text-slate-400">Updated {{ article.updated_at|date:"Y-m-d H:i" }}</p>
+  </div>
+
+  <!-- Feedback widget -->
+  {% if not already_gave_feedback %}
+  <div id="feedback-widget" class="border-t mt-4 pt-4">
+    {% include "knowledgebase/partials/feedback_form.html" %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

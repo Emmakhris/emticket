@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Analytics — Hospital Desk{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-5">
+  <h1 class="text-xl font-semibold">Analytics</h1>
+  <div class="flex gap-2 text-sm">
+    <a href="?days=7" class="px-3 py-1.5 rounded-lg border {% if days == 7 %}bg-slate-900 text-white{% else %}hover:bg-slate-50{% endif %}">7d</a>
+    <a href="?days=30" class="px-3 py-1.5 rounded-lg border {% if days == 30 %}bg-slate-900 text-white{% else %}hover:bg-slate-50{% endif %}">30d</a>
+    <a href="?days=90" class="px-3 py-1.5 rounded-lg border {% if days == 90 %}bg-slate-900 text-white{% else %}hover:bg-slate-50{% endif %}">90d</a>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  <!-- Volume Chart -->
+  <div class="bg-white rounded-xl border p-5">
+    <h2 class="font-semibold text-sm mb-4">Ticket Volume (last {{ days }} days)</h2>
+    <canvas id="volumeChart" height="200"></canvas>
+  </div>
+
+  <!-- SLA Compliance -->
+  <div class="bg-white rounded-xl border p-5">
+    <h2 class="font-semibold text-sm mb-4">SLA Compliance</h2>
+    <div class="flex items-center justify-center gap-8 py-6">
+      <div class="text-center">
+        <div class="text-4xl font-bold {% if sla.rate >= 90 %}text-green-600{% elif sla.rate >= 70 %}text-amber-500{% else %}text-red-600{% endif %}">
+          {{ sla.rate }}%
+        </div>
+        <div class="text-xs text-slate-500 mt-1">Compliance rate</div>
+      </div>
+      <div class="text-sm space-y-1">
+        <div><span class="text-slate-500">Total tickets:</span> <strong>{{ sla.total }}</strong></div>
+        <div><span class="text-slate-500">Breached:</span> <strong class="text-red-600">{{ sla.breached }}</strong></div>
+        <div><span class="text-slate-500">Compliant:</span> <strong class="text-green-600">{{ sla.compliant }}</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent Workload -->
+  <div class="bg-white rounded-xl border p-5">
+    <h2 class="font-semibold text-sm mb-4">Agent Workload (open tickets)</h2>
+    <canvas id="workloadChart" height="200"></canvas>
+  </div>
+
+  <!-- Category Breakdown -->
+  <div class="bg-white rounded-xl border p-5">
+    <h2 class="font-semibold text-sm mb-4">Top Categories (last {{ days }} days)</h2>
+    <canvas id="categoryChart" height="200"></canvas>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+const volumeData = {{ volume_json|safe }};
+const workloadData = {{ workload_json|safe }};
+const categoryData = {{ categories_json|safe }};
+
+new Chart(document.getElementById('volumeChart'), {
+  type: 'bar',
+  data: {
+    labels: volumeData.map(d => d.day),
+    datasets: [{ label: 'Tickets created', data: volumeData.map(d => d.count), backgroundColor: '#334155' }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false } } }
+});
+
+new Chart(document.getElementById('workloadChart'), {
+  type: 'bar',
+  data: {
+    labels: workloadData.map(d => d.email),
+    datasets: [{ label: 'Open tickets', data: workloadData.map(d => d.count), backgroundColor: '#3b82f6' }]
+  },
+  options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } } }
+});
+
+new Chart(document.getElementById('categoryChart'), {
+  type: 'doughnut',
+  data: {
+    labels: categoryData.map(d => d.name),
+    datasets: [{ data: categoryData.map(d => d.count) }]
+  },
+  options: { responsive: true }
+});
+</script>
+{% endblock %}

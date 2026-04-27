@@ -17,6 +17,8 @@ urlpatterns = [
     path("automations/", include("automations.urls")),
     path("sla/", include("sla.urls")),
     path("notifications/", include("notifications.urls")),
+    path("kb/", include("knowledgebase.urls")),
+    path("portal/", include("portal.urls")),
 
     path("healthz/", lambda request: JsonResponse({"status": "ok"})),
     path("readyz/", lambda request: JsonResponse({"ready": True})),
