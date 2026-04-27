@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import (
     CSAT,
+    CannedResponse,
     Ticket,
     TicketAttachment,
     TicketCategory,
@@ -66,3 +67,11 @@ class TicketLinkAdmin(admin.ModelAdmin):
 @admin.register(TicketDependency)
 class TicketDependencyAdmin(admin.ModelAdmin):
     list_display = ("blocked_ticket", "depends_on_ticket", "created_at")
+
+
+@admin.register(CannedResponse)
+class CannedResponseAdmin(admin.ModelAdmin):
+    list_display = ("name", "department", "organization", "is_active", "created_at")
+    list_filter = ("organization", "department", "is_active")
+    search_fields = ("name", "body")
+    raw_id_fields = ("organization", "department", "created_by")

@@ -114,7 +114,7 @@ def ticket_create(request):
 def ticket_detail(request, ticket_id):
     ticket = get_object_or_404(
         Ticket.objects.select_related(
-            "department", "team", "category", "site", "assignee", "requester", "related_asset"
+            "department", "team", "category", "site", "assignee", "requester", "related_asset", "sla"
         ).prefetch_related("comments__author", "attachments", "watchers"),
         id=ticket_id,
     )

@@ -2,7 +2,23 @@
 {% block title %}Tickets · Hospital Desk{% endblock %}
 
 {% block content %}
-<div x-data="{ selected: [] }" class="flex flex-col gap-4">
+<div x-data="{ selected: [], showSaveModal: false }" class="flex gap-4">
+<!-- Saved views sidebar -->
+<div class="w-44 shrink-0">
+  <div class="bg-white rounded-xl border p-3">
+    <div class="text-xs font-medium text-slate-500 mb-2">Saved Filters</div>
+    <div hx-get="{% url 'reporting:saved_views' %}"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+    </div>
+    <button @click="showSaveModal = true"
+            class="mt-2 w-full text-xs text-slate-500 border rounded px-2 py-1 hover:bg-slate-50">
+      + Save current filter
+    </button>
+  </div>
+</div>
+
+<div class="flex-1 flex flex-col gap-4">
   <div class="flex items-end justify-between gap-4">
     <div>
       <h1 class="text-2xl font-semibold">Tickets</h1>
@@ -66,5 +82,29 @@
   <div id="ticketTable" class="bg-white rounded-2xl border shadow-sm overflow-hidden">
     {% include "tickets/partials/table.html" %}
   </div>
+</div><!-- end flex-1 -->
+
+<!-- Save filter modal -->
+<div x-show="showSaveModal" @click.self="showSaveModal = false"
+     x-cloak
+     class="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+  <div class="bg-white rounded-xl border p-5 w-80 shadow-xl">
+    <h3 class="font-semibold mb-3 text-sm">Save Current Filter</h3>
+    <form hx-post="{% url 'reporting:saved_view_create' %}"
+          hx-target="#saved-views"
+          hx-include="[name=q],[name=status],[name=my]"
+          @htmx:after-request="showSaveModal = false"
+          class="space-y-3">
+      {% csrf_token %}
+      <input name="name" placeholder="Filter name…"
+             class="w-full border rounded-lg px-3 py-2 text-sm" required>
+      <div class="flex gap-2">
+        <button type="submit" class="px-4 py-2 bg-slate-900 text-white text-sm rounded-lg">Save</button>
+        <button type="button" @click="showSaveModal = false" class="px-4 py-2 border text-sm rounded-lg">Cancel</button>
+      </div>
+    </form>
+  </div>
 </div>
+
+</div><!-- end outer x-data -->
 {% endblock %}

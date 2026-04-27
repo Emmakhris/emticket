@@ -1,0 +1,16 @@
+<div id="saved-views" class="space-y-1">
+  {% for sv in saved_views %}
+  <div class="flex items-center justify-between group">
+    <a href="{% url 'tickets:list' %}?{% for k,v in sv.filter_json.items %}{{ k }}={{ v }}&{% endfor %}"
+       class="text-sm text-slate-600 hover:text-slate-900 hover:underline truncate flex-1">
+      {{ sv.name }}
+    </a>
+    <button hx-post="{% url 'reporting:saved_view_delete' sv.pk %}"
+            hx-target="#saved-views"
+            hx-swap="outerHTML"
+            class="hidden group-hover:inline text-xs text-slate-400 hover:text-red-600 ml-2">×</button>
+  </div>
+  {% empty %}
+  <p class="text-xs text-slate-400">No saved filters yet.</p>
+  {% endfor %}
+</div>

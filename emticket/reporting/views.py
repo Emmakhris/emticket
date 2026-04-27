@@ -1,7 +1,10 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.views.decorators.http import require_POST
 
 from accounts.permissions import require_role
+from .models import SavedView
 from .services import get_dashboard_stats, get_volume_by_day, get_sla_compliance, get_agent_workload, get_category_breakdown
 
 
@@ -62,3 +65,44 @@ def analytics(request):
         "sla": sla,
     }
     return render(request, "reporting/analytics.html", ctx)
+
+
+@login_required
+@require_POST
+def saved_view_create(request):
+    org = _get_org(request)
+    name = request.POST.get("name", "").strip()
+    filter_json = {}
+    for key in ("q", "status", "my", "priority"):
+        val = request.POST.get(key, "")
+        if val:
+            filter_json[key] = val
+
+    if not name or not org:
+        return JsonResponse({"error": "name required"}, status=400)
+
+    obj, _ = SavedView.objects.update_or_create(
+        organization=org, user=request.user, name=name,
+        defaults={"filter_json": filter_json},
+    )
+    return render(request, "reporting/partials/saved_views.html", {
+        "saved_views": SavedView.objects.filter(organization=org, user=request.user).order_by("name"),
+    })
+
+
+@login_required
+@require_POST
+def saved_view_delete(request, pk):
+    org = _get_org(request)
+    sv = get_object_or_404(SavedView, pk=pk, user=request.user, organization=org)
+    sv.delete()
+    return render(request, "reporting/partials/saved_views.html", {
+        "saved_views": SavedView.objects.filter(organization=org, user=request.user).order_by("name"),
+    })
+
+
+@login_required
+def saved_views_list(request):
+    org = _get_org(request)
+    saved_views = SavedView.objects.filter(organization=org, user=request.user).order_by("name")
+    return render(request, "reporting/partials/saved_views.html", {"saved_views": saved_views})
