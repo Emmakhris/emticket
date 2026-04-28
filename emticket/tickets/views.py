@@ -24,6 +24,21 @@ from .models import Ticket, TicketComment, TicketStatus
 User = get_user_model()
 
 
+def _sidebar_ctx(ticket, request):
+    """Build the context dict needed to re-render the sidebar partial."""
+    profile = getattr(request.user, "profile", None)
+    assignee_options = User.objects.all().order_by("email")[:200]
+    if profile and profile.organization_id:
+        assignee_options = User.objects.filter(
+            profile__organization_id=profile.organization_id
+        ).order_by("email")[:200]
+    return {
+        "ticket": ticket,
+        "status_choices": TicketStatus.choices,
+        "assignee_options": assignee_options,
+    }
+
+
 @login_required
 def ticket_list(request):
     q = (request.GET.get("q") or "").strip()
@@ -237,7 +252,7 @@ def ticket_set_status(request, ticket_id):
         request=request,
     )
 
-    return render(request, "tickets/partials/sidebar.html", {"ticket": ticket, "status_choices": TicketStatus.choices})
+    return render(request, "tickets/partials/sidebar.html", _sidebar_ctx(ticket, request))
 
 
 @login_required
@@ -283,7 +298,7 @@ def ticket_assign(request, ticket_id):
     )
     send_notification_email.delay(notif.pk, "ticket.assigned")
 
-    return render(request, "tickets/partials/sidebar.html", {"ticket": ticket, "status_choices": TicketStatus.choices})
+    return render(request, "tickets/partials/sidebar.html", _sidebar_ctx(ticket, request))
 
 
 @login_required
@@ -310,7 +325,7 @@ def ticket_unassign(request, ticket_id):
         request=request,
     )
 
-    return render(request, "tickets/partials/sidebar.html", {"ticket": ticket, "status_choices": TicketStatus.choices})
+    return render(request, "tickets/partials/sidebar.html", _sidebar_ctx(ticket, request))
 
 
 @login_required
