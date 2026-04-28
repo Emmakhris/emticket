@@ -32,7 +32,7 @@
   {% endfor %}
 </div>
 
-{% if ticket.status not in "resolved,closed" %}
+{% if ticket.status != "resolved" and ticket.status != "closed" %}
 <form hx-post="{% url 'tickets:add_comment' ticket.id %}"
       hx-target="body"
       class="mt-4 bg-white rounded-xl border p-4 space-y-3">
