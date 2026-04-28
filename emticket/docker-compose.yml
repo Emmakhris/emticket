@@ -46,6 +46,11 @@ services:
       - --access-logfile=-
       - --error-logfile=-
     env_file: .env
+    environment:
+      # Override .env values so containers use Docker service names, not localhost
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
@@ -71,6 +76,10 @@ services:
       - INFO
       - --concurrency=2
     env_file: .env
+    environment:
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
     volumes:
       - .:/app
       - media_volume:/app/media
@@ -94,6 +103,10 @@ services:
       - --scheduler
       - django_celery_beat.schedulers:DatabaseScheduler
     env_file: .env
+    environment:
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
     volumes:
       - .:/app
     depends_on:
