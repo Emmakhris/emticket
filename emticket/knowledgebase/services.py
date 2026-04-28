@@ -5,6 +5,29 @@ from django.db.models import Q
 from .models import ArticleVisibility, KBArticle
 
 
+def get_suggested_articles_by_query(org, query: str, category=None, limit: int = 5):
+    """
+    Return KB articles relevant to a free-text query, used before a ticket is saved.
+    Filters by org; optionally narrows by department via category.
+    """
+    qs = KBArticle.objects.filter(
+        organization=org,
+        is_active=True,
+        visibility__in=[ArticleVisibility.PUBLIC, ArticleVisibility.INTERNAL],
+    ).select_related("category", "department")
+
+    words = [w for w in query.split() if len(w) > 3][:6]
+    if words:
+        q = Q()
+        for w in words:
+            q |= Q(title__icontains=w) | Q(body__icontains=w)
+        qs = qs.filter(q)
+    else:
+        qs = qs.none()
+
+    return qs.order_by("-updated_at")[:limit]
+
+
 def get_suggested_articles(ticket, limit: int = 5):
     """
     Return KB articles relevant to the given ticket based on category and title keywords.

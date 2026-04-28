@@ -11,6 +11,7 @@ from accounts.permissions import require_role
 
 from .forms import KBArticleForm, KBFeedbackForm
 from .models import ArticleVisibility, KBArticle, KBArticleFeedback
+from .services import get_suggested_articles_by_query
 
 _ALLOWED_TAGS = list(bleach.sanitizer.ALLOWED_TAGS) + [
     "p", "h1", "h2", "h3", "h4", "h5", "h6", "br", "hr", "blockquote",
@@ -122,3 +123,12 @@ def article_feedback(request, pk):
     return render(request, "knowledgebase/partials/feedback_form.html", {
         "article": article, "feedback_form": form,
     })
+
+
+@login_required
+def suggest(request):
+    """HTMX: return matching KB articles for a live query from the ticket create form."""
+    org = _get_org(request)
+    query = request.GET.get("q", "").strip()
+    articles = get_suggested_articles_by_query(org, query) if org and query else []
+    return render(request, "knowledgebase/partials/suggestions.html", {"articles": articles})

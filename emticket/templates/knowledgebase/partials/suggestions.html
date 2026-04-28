@@ -1,0 +1,19 @@
+{% if articles %}
+  <div class="text-xs font-medium text-slate-500 mb-2">Suggested Articles</div>
+  <ul class="space-y-2">
+    {% for article in articles %}
+    <li>
+      <a href="{% url 'knowledgebase:article_detail' article.pk %}"
+         target="_blank"
+         class="block text-sm text-blue-700 hover:underline leading-snug">
+        {{ article.title }}
+      </a>
+      {% if article.department %}
+        <span class="text-xs text-slate-400">{{ article.department.name }}</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="text-xs text-slate-400">Type a title to see related articles.</p>
+{% endif %}
