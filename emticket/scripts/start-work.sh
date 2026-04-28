@@ -2,4 +2,4 @@
 set -e
 
 echo "Starting Celery worker..."
-exec celery -A config worker -l INFO --concurrency=2
+exec celery -A emticket worker -l INFO --concurrency=2
